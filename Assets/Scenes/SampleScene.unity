@@ -694,6 +694,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 841a58860c33e4b8390d3fa13ada7809, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputActions: {fileID: -944628639613478452, guid: 6ce37adb8651941e5adc7639ef1ac7bb,
+    type: 3}
+  delayBetweenConnects: 0.5
 --- !u!1 &1443629195
 GameObject:
   m_ObjectHideFlags: 0

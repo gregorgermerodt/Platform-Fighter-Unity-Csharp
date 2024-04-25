@@ -1,43 +1,73 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class RuntimeControllerDetector : MonoBehaviour
 {
+    [SerializeField]
+    private InputActionAsset inputActions;
+    private InputAction anyKeyAction;
+    [SerializeField]
+    float delayBetweenConnects = 0.5f;
+    float lastConnect;
+    int activeDeviceId = -1;
+
     private void OnEnable()
     {
-        // Hinzufügen des Listeners zum onDeviceChange Ereignis
         InputSystem.onDeviceChange += OnDeviceChange;
+        if (inputActions != null)
+        {
+            anyKeyAction = inputActions.FindActionMap("AnyKey").FindAction("AnyKey");
+            anyKeyAction.performed += OnAnyKeyPerformed;
+            anyKeyAction.Enable();
+        }
     }
 
     private void OnDisable()
     {
-        // Entfernen des Listeners, wenn das Skript deaktiviert wird
         InputSystem.onDeviceChange -= OnDeviceChange;
+    }
+
+    void Start()
+    {
+        lastConnect = Time.time;
+    }
+
+    void Update()
+    {
+
     }
 
     private void OnDeviceChange(InputDevice device, InputDeviceChange change)
     {
         if (change == InputDeviceChange.Added)
         {
-            // Gerät wurde verbunden
-            Debug.Log("Gerät verbunden: " + device.name);
-
-            // Hier können Sie spezifische Aktionen durchführen, wenn ein Gerät verbunden wird
-            // Zum Beispiel: Überprüfen, ob es sich um ein Gamepad handelt
-            if (device is Gamepad)
-            {
-                Debug.Log("Gamepad verbunden: " + device.name);
-                // Führen Sie hier Aktionen durch, die spezifisch für Gamepads sind
-            }
+            Debug.Log("Gerät verbunden: " + device.name + " Id: " + device.deviceId);
         }
         else if (change == InputDeviceChange.Removed)
         {
-            // Gerät wurde getrennt
-            Debug.Log("Gerät getrennt: " + device.name);
-
-            // Hier können Sie spezifische Aktionen durchführen, wenn ein Gerät getrennt wird
+            Debug.LogWarning("Gerät getrennt: " + device.name + " Id: " + device.deviceId);
         }
+    }
+
+    private void OnAnyKeyPerformed(InputAction.CallbackContext context)
+    {
+        Debug.Log("Taste (" + context.control.name + ") gedrückt von Gerät: " + context.control.device.name + " Id: " + context.control.device.deviceId);
+
+        if (Time.time - lastConnect < delayBetweenConnects)
+        {
+            Debug.LogWarning("Gerät: " + context.control.device.name + " (Id: " + context.control.device.deviceId
+            + ") versucht sich zu schnell zu verbinden!");
+        }
+
+        if (activeDeviceId == -1)
+            activeDeviceId = context.control.device.deviceId;
+            Debug.Log("Gerät: " + context.control.device.name + " (Id: " + context.control.device.deviceId
+            + ") ist jetzt das Hauptgerät!");
+
+        lastConnect = Time.time;
+
     }
 }
