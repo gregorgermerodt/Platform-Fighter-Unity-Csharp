@@ -49,6 +49,11 @@ public class RuntimeControllerDetector : MonoBehaviour
         else if (change == InputDeviceChange.Removed)
         {
             Debug.LogWarning("Gerät getrennt: " + device.name + " Id: " + device.deviceId);
+            if (device.deviceId == activeDeviceId)
+            {
+                activeDeviceId = -1;
+                Debug.LogWarning("Hauptgerät wurde getrennt, activeDeviceId wurde zurückgesetzt!");
+            }
         }
     }
 
