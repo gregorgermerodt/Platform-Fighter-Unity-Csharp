@@ -63,9 +63,12 @@ public class RuntimeControllerDetector : MonoBehaviour
         }
 
         if (activeDeviceId == -1)
-            activeDeviceId = context.control.device.deviceId;
+        {
+                activeDeviceId = context.control.device.deviceId;
             Debug.Log("Gerät: " + context.control.device.name + " (Id: " + context.control.device.deviceId
             + ") ist jetzt das Hauptgerät!");
+        }
+
 
         lastConnect = Time.time;
 
