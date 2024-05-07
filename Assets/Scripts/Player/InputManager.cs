@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor.Rendering.LookDev;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,11 +11,11 @@ public class InputManager : MonoBehaviour
     [field: SerializeField] public InputActionAsset inputActions { get; set; }
     InputAction anyKeyAction;
 
-    [SerializeField] float delayBetweenConnects = 0.5f;
+    [SerializeField] float delayBetweenConnects = 0.25f;
     float lastConnect;
 
-    [field: SerializeField] public bool allowControllerAssigns { get; set; } = false;
-    [field: SerializeField] public int[] playerControllerDeviceIds { get; } = { -1, -1 };
+    [field: SerializeField] public bool allowControllerAssigns { get; set; }
+    [field: SerializeField] public List<int> playerControllerDeviceIds = new List<int> { -1, -1 };
 
     private void OnEnable()
     {
@@ -23,8 +24,6 @@ public class InputManager : MonoBehaviour
         {
             anyKeyAction = inputActions.FindActionMap("AnyKey").FindAction("AnyKey");
             anyKeyAction.started += OnAnyKeyPerformed;
-            if (allowControllerAssigns)
-                anyKeyAction.Enable();
         }
     }
 
@@ -34,7 +33,6 @@ public class InputManager : MonoBehaviour
             anyKeyAction.Enable();
         else if (!allowControllerAssigns && anyKeyAction.enabled)
             anyKeyAction.Disable();
-
     }
 
     private void OnDisable()
@@ -55,7 +53,7 @@ public class InputManager : MonoBehaviour
         }
         else if (change == InputDeviceChange.Removed)
         {
-            for (int i = 0; i < playerControllerDeviceIds.Length; i++)
+            for (int i = 0; i < playerControllerDeviceIds.Count; i++)
             {
                 if (playerControllerDeviceIds[i] == device.deviceId)
                 {
@@ -80,7 +78,7 @@ public class InputManager : MonoBehaviour
                 ") is trying get assigned before the set delay!");
         }
         if (!playerControllerDeviceIds.Contains(context.control.device.deviceId))
-            for (int i = 0; i < playerControllerDeviceIds.Length; i++)
+            for (int i = 0; i < playerControllerDeviceIds.Count; i++)
                 if (playerControllerDeviceIds[i] == -1)
                 {
                     playerControllerDeviceIds[i] = context.control.device.deviceId;
@@ -88,7 +86,6 @@ public class InputManager : MonoBehaviour
                     + ") is now assigned to Player" + (i + 1) + ".");
                     break;
                 }
-
         lastConnect = Time.time;
     }
 }

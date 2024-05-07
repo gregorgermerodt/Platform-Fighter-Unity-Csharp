@@ -21,7 +21,7 @@ public class FighterMovement : MonoBehaviour
     void OnEnable()
     {
         InputManager inputManager = FindAnyObjectByType<InputManager>();
-        inputManager.allowControllerAssigns = true;
+        //inputManager.allowControllerAssigns = true;
 
         player = PlayerGlobals.Player.PLAYER_1;
         movementAction = inputManager.inputActions.FindActionMap("InGame").FindAction("Movement");
