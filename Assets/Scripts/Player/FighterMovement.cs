@@ -8,14 +8,37 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))]
 public class FighterMovement : MonoBehaviour
 {
-    PlayerGlobals.Player player;
+    public enum LookDirection {
+        RIGHT,
+        LEFT
+    }
+    public enum MovementState {
+        IDLE,
+        WALK,
+        DASH,
+        RUN,
+        TURNING_AROUND_RIGHT,
+        TURNING_AROUND_LEFT,
+        RUN_TURNING_AROUND_RIGHT,
+        RUN_TURNING_AROUND_LEFT,
+        JUMP,
+        AIR_IDLE,
+        AIRDOGE,
+        FREEFALL
+    }
+
+    [SerializeField] PlayerGlobals.Player player;
     InputAction movementAction;
     InputAction jumpAction;
-
     Rigidbody rb;
 
+    MovementState movementState;
     Vector2 velocity;
-    [SerializeField] float moveSpeed = 20f;
+    bool isOnGround;
+    LookDirection lookDirection;
+    int timesJumped;
+    int frameCounter;
+    [SerializeField] float movementSpeed = 20f;
     [SerializeField] float jumpForce = 10f;
 
     void OnEnable()
@@ -48,7 +71,7 @@ public class FighterMovement : MonoBehaviour
     {
         velocity = context.ReadValue<Vector2>();
         float moveX = velocity.x;
-        rb.velocity += new Vector3(moveX * moveSpeed * Time.deltaTime, 0, 0);
+        rb.velocity += new Vector3(moveX * movementSpeed * Time.deltaTime, 0, 0);
     }
 
     void OnJumpPerformed(InputAction.CallbackContext context)
