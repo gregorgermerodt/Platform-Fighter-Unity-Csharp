@@ -647,7 +647,7 @@ MonoBehaviour:
   <inputActions>k__BackingField: {fileID: -944628639613478452, guid: 6ce37adb8651941e5adc7639ef1ac7bb,
     type: 3}
   delayBetweenConnects: 0.25
-  <allowControllerAssigns>k__BackingField: 0
+  <allowControllerAssigns>k__BackingField: 1
   playerControllerDeviceIds: ffffffffffffffff
 --- !u!4 &1226104272
 Transform:
@@ -744,8 +744,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 841a58860c33e4b8390d3fa13ada7809, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
-  jumpForce: 10
+  playerNumber: 0
+  smashStickFlickThreshold: 0.5
+  isInvincible: 0
+  movementSpeed: 100
+  jumpForce: 7
 --- !u!54 &1352236106
 Rigidbody:
   m_ObjectHideFlags: 0

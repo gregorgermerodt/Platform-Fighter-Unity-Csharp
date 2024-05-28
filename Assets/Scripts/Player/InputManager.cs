@@ -84,6 +84,9 @@ public class InputManager : MonoBehaviour
                     playerControllerDeviceIds[i] = context.control.device.deviceId;
                     Debug.Log("Device: " + context.control.device.name + " (Id: " + context.control.device.deviceId
                     + ") is now assigned to Player" + (i + 1) + ".");
+                    foreach (var fm in FindObjectsOfType<FighterMovement>()) {
+                        fm.UpdateDeviceId(this);
+                    }
                     break;
                 }
         lastConnect = Time.time;
