@@ -7,6 +7,7 @@ using Unity.VisualScripting;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 [RequireComponent(typeof(Rigidbody))]
 public class FighterMovement : MonoBehaviour
@@ -42,16 +43,24 @@ public class FighterMovement : MonoBehaviour
         SPECIAL_ATTACK
     }
 
+    public enum ActionState
+    {
+        STARTED,
+        ACTIVE,
+        CANCELED
+    }
+
     [SerializeField] PlayerGlobals.Player playerNumber;
+
     InputAction movementAction;
-    bool isMovementStarted;
-    bool isMovementPerformed;
-    bool isMovementCanceled;
+    bool isMovementActionStarted;
+    bool isMovementActionPerformed;
+    bool isMovementActionCanceled;
 
     InputAction jumpAction;
-    bool isJumpStarted;
-    bool isJumpPerformed;
-    bool isJumpCanceled;
+    bool isJumpActionStarted;
+    bool isJumpActionPerformed;
+    bool isJumpActionCanceled;
 
     Rigidbody rb;
 
@@ -59,7 +68,7 @@ public class FighterMovement : MonoBehaviour
     Vector2 lastLeftStickPosition;
     Vector2 leftStickMovementVelocity;
     bool isStickFlicked;
-    bool isLeftStickResting;
+    bool isLeftStickResting { get { return !isMovementActionPerformed; } }
 
     MovementState movementState;
     LookDirection lookDirection = LookDirection.RIGHT;
@@ -68,10 +77,11 @@ public class FighterMovement : MonoBehaviour
     int midAirJumpCount;
 
     bool isOnGround { get { return !airBourneStates.Contains(movementState); } }
-    bool isJumpingLocked { get { return !noJumpStates.Contains(movementState); } }
-    bool isShieldLocked { get { return !noShieldStates.Contains(movementState); } }
+    bool isJumpingLocked { get { return noJumpStates.Contains(movementState); } }
+    bool isShieldLocked { get { return noShieldStates.Contains(movementState); } }
     bool isFastfalling;
     bool isMovementLocked;
+
     [SerializeField] bool isInvincible;
 
     // Debug
@@ -123,14 +133,14 @@ public class FighterMovement : MonoBehaviour
 
         playerNumber = PlayerGlobals.Player.PLAYER_1;
         movementAction = inputManager.inputActions.FindActionMap("InGame").FindAction("Movement");
-        movementAction.started += context => isMovementStarted = true;
-        movementAction.performed += context => isMovementPerformed = true;
-        movementAction.canceled += context => isMovementCanceled = true;
+        movementAction.started += context => isMovementActionStarted = true;
+        movementAction.performed += context => isMovementActionPerformed = true;
+        movementAction.canceled += context => isMovementActionCanceled = true;
 
         jumpAction = inputManager.inputActions.FindActionMap("InGame").FindAction("Jump");
-        jumpAction.started += context => isJumpStarted = true;
-        jumpAction.performed += context => isJumpPerformed = true;
-        jumpAction.canceled += context => isJumpCanceled = true;
+        jumpAction.started += context => isJumpActionStarted = true;
+        jumpAction.performed += context => isJumpActionPerformed = true;
+        jumpAction.canceled += context => isJumpActionCanceled = true;
 
         rb = GetComponent<Rigidbody>();
     }
@@ -150,7 +160,6 @@ public class FighterMovement : MonoBehaviour
     void FixedUpdate()
     {
         Vector2 leftStickPosition = movementAction.ReadValue<Vector2>();
-        isLeftStickResting = leftStickPosition == Vector2.zero;
         MovementState lastMovementState = movementState;
         switch (lastMovementState)
         {
@@ -187,9 +196,9 @@ public class FighterMovement : MonoBehaviour
 
         // TODO: Check if touching ground and reset jumps
         // Jump from almost every state
-        if (isJumpStarted &&
+        if (isJumpActionStarted &&
             midAirJumpCount < 2 &&
-            !noJumpStates.Contains(movementState))
+            !isJumpingLocked)
         {
             ChangeIntoMovementState(MovementState.JUMPSQUAT);
         }
@@ -229,9 +238,9 @@ public class FighterMovement : MonoBehaviour
         {
             // TODO: Forgive Player: Check if it should have been a smash attack
 
-
             if (IsLookDirectionOppositeStick(leftStickPosition, 0.9f)) // Dash Dance
             {
+                ReverseLookDirection();
                 ChangeIntoMovementState(MovementState.DASH_TURNAROUND);
             }
         }
@@ -290,7 +299,7 @@ public class FighterMovement : MonoBehaviour
     void OnIdle(Vector2 leftStickPosition)
     {
         // Movement (left stick)
-        if (!isLeftStickResting)
+        if (isMovementActionPerformed)
         {
             if (IsLookDirectionEqualStick(leftStickPosition))
             {
@@ -302,10 +311,7 @@ public class FighterMovement : MonoBehaviour
             }
             else // if (IsLookDirectionOppositeStick(leftStickPosition))
             {
-                // Reverse lookDirection
-                lookDirection
-                    = lookDirection == LookDirection.RIGHT ? LookDirection.LEFT : LookDirection.RIGHT;
-
+                ReverseLookDirection();
                 // If stick is flicked within 1 frame, it's a dash, otherwise a walk
                 if (leftStickPosition.x > 0.9f || leftStickPosition.x < -0.9f)
                     ChangeIntoMovementState(MovementState.DASH_TURNAROUND);
@@ -331,8 +337,6 @@ public class FighterMovement : MonoBehaviour
 
     void ChangeIntoMovementState(MovementState movementState, bool resetFrameCounter = true)
     {
-        if (true)
-            ReverseLookDirection();
         this.movementState = movementState;
         if (resetFrameCounter)
             ResetFrameCounter();
@@ -354,13 +358,13 @@ public class FighterMovement : MonoBehaviour
 
     void ResetInputStates()
     {
-        isMovementStarted = false;
-        isMovementPerformed = false;
-        isMovementCanceled = false;
+        isMovementActionStarted = false;
+        isMovementActionPerformed = isMovementActionCanceled ? false : isMovementActionPerformed;
+        isMovementActionCanceled = false;
 
-        isJumpStarted = false;
-        isJumpPerformed = false;
-        isJumpCanceled = false;
+        isJumpActionStarted = false;
+        isJumpActionPerformed = isJumpActionCanceled ? false : isJumpActionPerformed;
+        isJumpActionCanceled = false;
     }
 
     public void UpdateDeviceId(InputManager inputManager)
