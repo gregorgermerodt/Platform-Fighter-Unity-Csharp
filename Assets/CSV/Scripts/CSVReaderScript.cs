@@ -1,70 +1,75 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.IO;
 
-public struct PlayerValues
-{
-    public string name;
-    public float scale;
-    public float xpos;
-    public float ypos;
-    public float zpos;
-}
+//public struct PlayerValues
+//{
+//    public string name;
+//    public float scale;
+//    public float xpos;
+//    public float ypos;
+//    public float zpos;
+//}
 
 public class CSVReaderScript : MonoBehaviour
 {
-    private string csvFilePath = "Assets/CSV/CSV-Files/stats.csv";
-    private string completePath;
-    private static List<PlayerValues> playerValues = new List<PlayerValues>();
+    //private List<PlayerValues> playerValues = new List<PlayerValues>();
+    //private TextAsset csvFile;
 
-    private void Start()
-    {
-        completePath = Path.Combine(Application.persistentDataPath, csvFilePath);
-        ReadCSVFile();
-    }
+    //private void Start()
+    //{
+    //    csvFile = Resources.Load<TextAsset>("CSV-Files/stats");
+    //    ReadCSVFile();
+    //}
 
-    private void ReadCSVFile()
-    {
-        if(!File.Exists(completePath))
-        {
-            Debug.Log("Datapath not found");
-            return;
-        }
-        string[] lines = File.ReadAllLines(completePath);
+    //private void ReadCSVFile()
+    //{
+    //    if (csvFile == null)
+    //    {
+    //        Debug.LogError("CSV file not loaded");
+    //        return;
+    //    }
 
-        // i = 1, first row contains captions
-        for(int i = 1; i < lines.Length; i++)
-        {
-            string[] values = lines[i].Split(';');
+    //    string[] lines = csvFile.text.Split('\n');
+    //    // first line is filled with the names of the values
+    //    for (int i = 1; i < lines.Length; i++)
+    //    {
+    //        // if there are empty lines in the file (e.g. at the end) they
+    //        // will be ignored
+    //        if (string.IsNullOrWhiteSpace(lines[i])) continue;
 
-            PlayerValues currPlaVal;
-            currPlaVal.name = values[0];
-            currPlaVal.scale = float.Parse(values[1]);
-            currPlaVal.xpos = float.Parse(values[2]);
-            currPlaVal.ypos = float.Parse(values[3]);
-            currPlaVal.zpos = float.Parse(values[4]);
+    //        string[] values = lines[i].Split(';');
 
-            Debug.Log(currPlaVal.name + " "
-                + currPlaVal.scale + " "
-                + currPlaVal.xpos + " "
-                + currPlaVal.ypos + " "
-                + currPlaVal.zpos + " ");
+    //        PlayerValues currPlaVal;
+    //        currPlaVal.name = values[0];
+    //        currPlaVal.scale = float.Parse(values[1]);
+    //        currPlaVal.xpos = float.Parse(values[2]);
+    //        currPlaVal.ypos = float.Parse(values[3]);
+    //        currPlaVal.zpos = float.Parse(values[4]);
 
-            playerValues.Add(currPlaVal);
-        }
-    }
+    //        playerValues.Add(currPlaVal);
+    //    }
+    //}
 
-    public static PlayerValues getPlayerValues(string playerName)
-    {
-        foreach(PlayerValues playerValue in playerValues)
-        {
-            if(playerValue.name == playerName)
-            {
-                return playerValue;
-            }
-        }
-        Debug.Log("No Player with specified name given");
-        return new PlayerValues();
-    }
+    //public PlayerValues GetPlayerValues(string playerName)
+    //{
+    //    foreach (PlayerValues playerValue in playerValues)
+    //    {
+    //        if (playerValue.name == playerName)
+    //        {
+    //            return playerValue;
+    //        }
+    //    }
+    //    Debug.LogError("No player with the specified name found");
+    //    return new PlayerValues("default", 0, 0, 0, 0);
+    //}
+
+    //public List<PlayerValues> GetAllPlayerValues()
+    //{
+    //    return playerValues;
+    //}
+
+    //public static void WriteCSVFile()
+    //{
+
+    //}
 }

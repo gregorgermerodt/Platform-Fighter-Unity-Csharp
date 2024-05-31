@@ -16,9 +16,6 @@ public class Movement : MonoBehaviour
     private void Start()
     {
         charController = GetComponent<CharacterController>();
-        PlayerValues playerValues = CSVReaderScript.getPlayerValues(this.name);
-        transform.localScale = new Vector3(playerValues.scale, playerValues.scale, playerValues.scale);
-        transform.position = new Vector3(playerValues.xpos, playerValues.ypos, playerValues.zpos);
     }
 
     void Update()
