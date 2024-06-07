@@ -9,7 +9,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 
-[RequireComponent(typeof(Rigidbody))]
 public class FighterMovement : MonoBehaviour
 {
     public enum LookDirection
@@ -20,27 +19,25 @@ public class FighterMovement : MonoBehaviour
 
     public enum MovementState
     {
-        IDLE,
-        WALK,
-        TURNAROUND,
-        SHIELD,
-        SHIELD_DROP,
-        DASH,
-        DASH_TURNAROUND,
-        RUN,
-        RUN_TURNAROUND,
-        BREAK_RUN,
-        JUMPSQUAT,
-        JUMP,
-        DOUBLE_JUMP,
-        AIR_IDLE,
-        AIRDODGE,
-        TUMBLE,
+        IDILING,
+        WALKING,
+        TURNAROUNDING,
+        SHIELDING,
+        SHIELD_DROPING,
+        DASHING,
+        DASH_TURNAROUNDING,
+        RUNNING,
+        RUN_TURNAROUNDING,
+        BREAK_RUNNING,
+        JUMPSQUATING,
+        JUMPING,
+        DOUBLE_JUMPING,
+        AIR_IDILING,
+        AIRDODGING,
+        TUMBLING,
         BAD_LANDING,
         LANDING,
-        FREEFALL,
-        ATTACK,
-        SPECIAL_ATTACK
+        FREEFALLING
     }
 
     public enum ActionState
@@ -61,8 +58,6 @@ public class FighterMovement : MonoBehaviour
     bool isJumpActionStarted;
     bool isJumpActionPerformed;
     bool isJumpActionCanceled;
-
-    Rigidbody rb;
 
     [SerializeField] float stickFlickVelocityThreshold = 0.5f;
     Vector2 lastLeftStickPosition;
@@ -85,46 +80,47 @@ public class FighterMovement : MonoBehaviour
     [SerializeField] bool isInvincible;
 
     // Debug
-    [SerializeField] float movementSpeed = 100f;
+    [SerializeField] float runSpeed = 20f;
+    [SerializeField] float walkSpeed = 10f;
     [SerializeField] float jumpForce = 7f;
+    [SerializeField] float deceleration_unused = 2f;
+    [SerializeField] float dashSpeed = 30f;
 
     static readonly MovementState[] airBourneStates = new MovementState[]
     {
-        MovementState.JUMP,
-        MovementState.AIR_IDLE,
-        MovementState.AIRDODGE,
-        MovementState.TUMBLE,
-        MovementState.FREEFALL
+        MovementState.JUMPING,
+        MovementState.AIR_IDILING,
+        MovementState.AIRDODGING,
+        MovementState.TUMBLING,
+        MovementState.FREEFALLING
     };
 
     static readonly MovementState[] noJumpStates = new MovementState[] {
         MovementState.LANDING,
         MovementState.BAD_LANDING,
-        MovementState.FREEFALL,
-        MovementState.AIRDODGE
+        MovementState.FREEFALLING,
+        MovementState.AIRDODGING
     };
 
     static readonly MovementState[] noShieldStates = new MovementState[] {
-        MovementState.SHIELD,
-        MovementState.SHIELD_DROP,
-        MovementState.DASH,
-        MovementState.DASH_TURNAROUND,
-        MovementState.RUN_TURNAROUND,
-        MovementState.BREAK_RUN,
-        MovementState.JUMPSQUAT,
-        MovementState.AIRDODGE,
+        MovementState.SHIELDING,
+        MovementState.SHIELD_DROPING,
+        MovementState.DASHING,
+        MovementState.DASH_TURNAROUNDING,
+        MovementState.RUN_TURNAROUNDING,
+        MovementState.BREAK_RUNNING,
+        MovementState.JUMPSQUATING,
+        MovementState.AIRDODGING,
         MovementState.BAD_LANDING,
         MovementState.LANDING,
-        MovementState.FREEFALL,
-        MovementState.ATTACK,
-        MovementState.SPECIAL_ATTACK
+        MovementState.FREEFALLING,
         // Shield state in the air is an airdodge
     };
 
     static readonly MovementState[] turnaroundStates = new MovementState[] {
-        MovementState.TURNAROUND,
-        MovementState.DASH_TURNAROUND,
-        MovementState.RUN_TURNAROUND
+        MovementState.TURNAROUNDING,
+        MovementState.DASH_TURNAROUNDING,
+        MovementState.RUN_TURNAROUNDING
     };
     void OnEnable()
     {
@@ -135,14 +131,20 @@ public class FighterMovement : MonoBehaviour
         movementAction = inputManager.inputActions.FindActionMap("InGame").FindAction("Movement");
         movementAction.started += context => isMovementActionStarted = true;
         movementAction.performed += context => isMovementActionPerformed = true;
-        movementAction.canceled += context => isMovementActionCanceled = true;
+        movementAction.canceled += context =>
+        {
+            isMovementActionPerformed = false;
+            isMovementActionCanceled = true;
+        };
 
         jumpAction = inputManager.inputActions.FindActionMap("InGame").FindAction("Jump");
         jumpAction.started += context => isJumpActionStarted = true;
         jumpAction.performed += context => isJumpActionPerformed = true;
-        jumpAction.canceled += context => isJumpActionCanceled = true;
-
-        rb = GetComponent<Rigidbody>();
+        jumpAction.canceled += context =>
+        {
+            isJumpActionPerformed = false;
+            isJumpActionCanceled = true;
+        };
     }
 
     void Start()
@@ -163,31 +165,31 @@ public class FighterMovement : MonoBehaviour
         MovementState lastMovementState = movementState;
         switch (lastMovementState)
         {
-            case MovementState.IDLE:
+            case MovementState.IDILING:
                 OnIdle(leftStickPosition);
                 break;
-            case MovementState.WALK:
+            case MovementState.WALKING:
                 OnWalk(leftStickPosition);
                 break;
-            case MovementState.TURNAROUND:
+            case MovementState.TURNAROUNDING:
                 OnTurnaround(leftStickPosition);
                 break;
-            case MovementState.SHIELD:
+            case MovementState.SHIELDING:
                 OnShield(leftStickPosition);
                 break;
-            case MovementState.SHIELD_DROP:
+            case MovementState.SHIELD_DROPING:
                 OnShieldDrop();
                 break;
-            case MovementState.DASH:
+            case MovementState.DASHING:
                 OnDash(leftStickPosition);
                 break;
-            case MovementState.DASH_TURNAROUND:
+            case MovementState.DASH_TURNAROUNDING:
                 OnDashTurnaround(leftStickPosition);
                 break;
-            case MovementState.RUN:
+            case MovementState.RUNNING:
                 OnRun(leftStickPosition);
                 break;
-            case MovementState.BREAK_RUN:
+            case MovementState.BREAK_RUNNING:
                 OnBreakRun(leftStickPosition);
                 break;
         }
@@ -200,7 +202,7 @@ public class FighterMovement : MonoBehaviour
             midAirJumpCount < 2 &&
             !isJumpingLocked)
         {
-            ChangeIntoMovementState(MovementState.JUMPSQUAT);
+            ChangeMovementState(MovementState.JUMPSQUATING);
         }
 
         ResetInputStates();
@@ -210,26 +212,26 @@ public class FighterMovement : MonoBehaviour
     private void OnTurnaround(Vector2 leftStickPosition)
     {
         if (frameCounter > 10)
-            ChangeIntoMovementState(MovementState.IDLE);
+            ChangeMovementState(MovementState.IDILING);
 
         OnIdle(leftStickPosition);
     }
 
     private void OnBreakRun(Vector2 leftStickPosition)
     {
-        if (frameCounter == 10)
-            ChangeIntoMovementState(MovementState.IDLE);
+        if (frameCounter > 10)
+            ChangeMovementState(MovementState.IDILING);
     }
 
     private void OnRun(Vector2 leftStickPosition)
     {
 
         if (!IsLookDirectionEqualStick(leftStickPosition, 0.9f)) // Stop the run
-            ChangeIntoMovementState(MovementState.BREAK_RUN);
+            ChangeMovementState(MovementState.BREAK_RUNNING);
 
         else if (IsLookDirectionOppositeStick(leftStickPosition)) // Turn around
-            ChangeIntoMovementState(MovementState.RUN_TURNAROUND);
-
+            ChangeMovementState(MovementState.RUN_TURNAROUNDING);
+        transform.position += new Vector3(leftStickPosition.x, 0, 0) * runSpeed * Time.deltaTime;
     }
 
     void OnDash(Vector2 leftStickPosition)
@@ -241,16 +243,19 @@ public class FighterMovement : MonoBehaviour
             if (IsLookDirectionOppositeStick(leftStickPosition, 0.9f)) // Dash Dance
             {
                 ReverseLookDirection();
-                ChangeIntoMovementState(MovementState.DASH_TURNAROUND);
+                ChangeMovementState(MovementState.DASH_TURNAROUNDING);
             }
         }
         else if (frameCounter < 10)
         {
             // TODO: Dash attack
         }
-        else if (frameCounter >= 10) // Switch to run after 10 frames            
-            ChangeIntoMovementState(MovementState.RUN);
-
+        else if (frameCounter >= 10) // Switch to run after 10 frames
+        {
+            ChangeMovementState(MovementState.RUNNING);
+            return;
+        }
+        transform.position += new Vector3(leftStickPosition.x, 0, 0) * dashSpeed * Time.deltaTime;
     }
 
     void OnDashTurnaround(Vector2 leftStickPosition)
@@ -261,7 +266,7 @@ public class FighterMovement : MonoBehaviour
     private void OnShieldDrop()
     {
         if (frameCounter > 10)
-            ChangeIntoMovementState(MovementState.IDLE);
+            ChangeMovementState(MovementState.IDILING);
     }
 
     void OnShield(Vector2 leftStickPosition)
@@ -270,7 +275,7 @@ public class FighterMovement : MonoBehaviour
         {
             // TODO: Shield active and rolls
             // if not holding shield button
-            ChangeIntoMovementState(MovementState.SHIELD_DROP);
+            ChangeMovementState(MovementState.SHIELD_DROPING);
         }
         return;
     }
@@ -280,20 +285,23 @@ public class FighterMovement : MonoBehaviour
         // Stop walking
         if (isLeftStickResting)
         {
-            ChangeIntoMovementState(MovementState.IDLE);
+            ChangeMovementState(MovementState.IDILING);
         }
         // Forgive Player: Check if it should have been a dash instead of walk
-        else if (frameCounter < 2)
+        if (frameCounter < 2)
         {
             if (IsLookDirectionEqualStick(leftStickPosition, 0.9f))
             {
-                ChangeIntoMovementState(MovementState.DASH);
+                ChangeMovementState(MovementState.DASHING);
+                return;
             }
             else if (IsLookDirectionOppositeStick(leftStickPosition, 0.9f))
             {
-                ChangeIntoMovementState(MovementState.DASH_TURNAROUND);
+                ChangeMovementState(MovementState.DASH_TURNAROUNDING);
+                return;
             }
         }
+        transform.position += new Vector3(leftStickPosition.x, 0, 0) * walkSpeed * Time.deltaTime;
     }
 
     void OnIdle(Vector2 leftStickPosition)
@@ -305,37 +313,23 @@ public class FighterMovement : MonoBehaviour
             {
                 // If stick is flicked within 1 frame, it's a dash, otherwise a walk
                 if (leftStickPosition.x > 0.9f || leftStickPosition.x < -0.9f)
-                    ChangeIntoMovementState(MovementState.DASH);
+                    ChangeMovementState(MovementState.DASHING);
                 else
-                    ChangeIntoMovementState(MovementState.WALK);
+                    ChangeMovementState(MovementState.WALKING);
             }
             else // if (IsLookDirectionOppositeStick(leftStickPosition))
             {
                 ReverseLookDirection();
                 // If stick is flicked within 1 frame, it's a dash, otherwise a walk
                 if (leftStickPosition.x > 0.9f || leftStickPosition.x < -0.9f)
-                    ChangeIntoMovementState(MovementState.DASH_TURNAROUND);
+                    ChangeMovementState(MovementState.DASH_TURNAROUNDING);
                 else
-                    ChangeIntoMovementState(MovementState.TURNAROUND);
+                    ChangeMovementState(MovementState.TURNAROUNDING);
             }
         }
     }
 
-    void OnMovementPerformed(Vector2 movementInput)
-    {
-        float moveX = movementInput.x;
-        rb.velocity += new Vector3(moveX * movementSpeed * Time.deltaTime, 0, 0);
-    }
-
-    void OnJumpPerformed(InputAction.CallbackContext context)
-    {
-        if (context.started)
-            rb.velocity += Vector3.up * jumpForce;
-    }
-
-    void SwitchMovementState(MovementState movementState) => this.movementState = movementState;
-
-    void ChangeIntoMovementState(MovementState movementState, bool resetFrameCounter = true)
+    void ChangeMovementState(MovementState movementState, bool resetFrameCounter = true)
     {
         this.movementState = movementState;
         if (resetFrameCounter)
@@ -348,7 +342,18 @@ public class FighterMovement : MonoBehaviour
         frameCounter = -1;
     }
 
-    void ReverseLookDirection() => lookDirection = lookDirection == LookDirection.RIGHT ? LookDirection.LEFT : LookDirection.RIGHT;
+    void ReverseLookDirection()
+    {
+        lookDirection = lookDirection == LookDirection.RIGHT ? LookDirection.LEFT : LookDirection.RIGHT;
+        if (lookDirection == LookDirection.RIGHT)
+        {
+            transform.rotation = Quaternion.Euler(0f, 45f, 0f);
+        }
+        else
+        {
+            transform.rotation = Quaternion.Euler(0f, -45f, 0f);
+        }
+    }
 
     bool IsLookDirectionOppositeStick(Vector2 stickPosition, float xMagnitude = 0.0f) =>
         (lookDirection == LookDirection.LEFT && stickPosition.x > xMagnitude) || (lookDirection == LookDirection.RIGHT && stickPosition.x < -xMagnitude);
@@ -359,11 +364,9 @@ public class FighterMovement : MonoBehaviour
     void ResetInputStates()
     {
         isMovementActionStarted = false;
-        isMovementActionPerformed = isMovementActionCanceled ? false : isMovementActionPerformed;
         isMovementActionCanceled = false;
 
         isJumpActionStarted = false;
-        isJumpActionPerformed = isJumpActionCanceled ? false : isJumpActionPerformed;
         isJumpActionCanceled = false;
     }
 

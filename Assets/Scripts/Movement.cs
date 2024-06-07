@@ -6,10 +6,10 @@ public class Movement : MonoBehaviour
     public float playerSpeed = 6.0f;            // Geschwindigkeit des Spielers
     public float gravityAcceleration = -9.81f;
     Vector3 gravityVelocity;
-    public Transform groundCheck;               // Referenz für Objekt am Fuße des Spielers
-    public float groundDistance = 1f;         // Radius von der unsichtbaren Sphäre die um den Mittelpunkt des
+    public Transform groundCheck;               // Referenz fï¿½r Objekt am Fuï¿½e des Spielers
+    public float groundDistance = 1f;         // Radius von der unsichtbaren Sphï¿½re die um den Mittelpunkt des
                                                 // groundCheck Objekts projiziert wird
-    public LayerMask groundMask;                // Bestimmt auf welche Objekte die Sphäre checken soll
+    public LayerMask groundMask;                // Bestimmt auf welche Objekte die Sphï¿½re checken soll
     public float jumpHeight = 3.0f;
     public static bool isGrounded;
 
@@ -44,7 +44,7 @@ public class Movement : MonoBehaviour
         float timeToElapse = 5f;
         while (elapsedTime < timeToElapse)
         {
-            Debug.Log(Time.deltaTime);
+            //Debug.Log(Time.deltaTime);
             elapsedTime += Time.deltaTime;
         }
 

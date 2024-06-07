@@ -23,8 +23,8 @@ public class InputManager : MonoBehaviour
         if (inputActions != null)
         {
             anyKeyAction = inputActions.FindActionMap("AnyKey").FindAction("AnyKey");
-            anyKeyAction.started += OnAnyKeyPerformed;
         }
+        anyKeyAction.started += OnAnyKeyPerformed;
     }
 
     void Update()
@@ -38,6 +38,12 @@ public class InputManager : MonoBehaviour
     private void OnDisable()
     {
         InputSystem.onDeviceChange -= OnDeviceChange;
+        if (inputActions != null)
+        {
+            anyKeyAction = inputActions.FindActionMap("AnyKey").FindAction("AnyKey");
+        }
+        anyKeyAction.started -= OnAnyKeyPerformed;
+
     }
 
     void Start()
@@ -84,7 +90,8 @@ public class InputManager : MonoBehaviour
                     playerControllerDeviceIds[i] = context.control.device.deviceId;
                     Debug.Log("Device: " + context.control.device.name + " (Id: " + context.control.device.deviceId
                     + ") is now assigned to Player" + (i + 1) + ".");
-                    foreach (var fm in FindObjectsOfType<FighterMovement>()) {
+                    foreach (var fm in FindObjectsOfType<FighterMovement>())
+                    {
                         fm.UpdateDeviceId(this);
                     }
                     break;
