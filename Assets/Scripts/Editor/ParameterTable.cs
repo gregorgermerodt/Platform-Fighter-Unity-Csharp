@@ -54,7 +54,7 @@ public class MCHEditorWindow : EditorWindow
         }
     }
 
-    public static CharacterStats GetPlayerValues(string characterName)
+    public static CharacterStats GetCharValues(string characterName)
     {
         foreach (CharacterStats characterStat in characterStats)
         {
@@ -392,10 +392,15 @@ public class MCHEditorWindow : EditorWindow
                         EditorGUI.DrawRect(rect: backgroundColorRect, color: _lighterColor);
 
                     heightJump += rowHeight;
+
+                    // if an element of the tool table has changed, update the scene
+                    if (GUI.changed)
+                    {
+                        UpStatsOfCharInScene(currentCharacter);
+                    }
                 }
             }
             GUI.EndScrollView(handleScrollWheel: true);
-
         }
         GUI.EndGroup();
 
@@ -417,6 +422,20 @@ public class MCHEditorWindow : EditorWindow
         }
 
         _firstOnGUIIterationAfterInitialize = false;
+    }
+
+    private static void UpStatsOfCharInScene(CharacterStats currentCharacter)
+    {
+        GameObject currChar = GameObject.Find(currentCharacter.name);
+        if(currChar != null)
+        {
+            currChar.transform.localScale = new Vector3(currentCharacter.scale, currentCharacter.scale, currentCharacter.scale);
+            currChar.transform.position = new Vector3(currentCharacter.xpos, currentCharacter.ypos, currentCharacter.zpos);
+        }
+        else
+        {
+            Debug.Log(currentCharacter.name + " has not been found in the scene");
+        }
     }
 
     private void Awake()
