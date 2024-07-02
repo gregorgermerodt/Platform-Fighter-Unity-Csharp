@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.Rendering.LookDev;
 using UnityEngine;
@@ -8,8 +10,9 @@ using UnityEngine.InputSystem;
 
 public class InputManager : MonoBehaviour
 {
-    [field: SerializeField] public InputActionAsset inputActions { get; set; }
     InputAction anyKeyAction;
+
+    [field: SerializeField] public InputActionAsset inputActions { get; set; }
 
     [SerializeField] float delayBetweenConnects = 0.25f;
     float lastConnect;
@@ -17,27 +20,49 @@ public class InputManager : MonoBehaviour
     [field: SerializeField] public bool allowControllerAssigns { get; set; }
     [field: SerializeField] public List<int> playerControllerDeviceIds = new List<int> { -1, -1 };
 
+    public event Action<InputManager> UpdateDeviceIdsEvent;
+
+    public static InputManager Instance { get; private set; }
+
     private void OnEnable()
     {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            throw new InvalidOperationException("Multiple InputManager active instances of InputManager in Scene!");
+        }
         InputSystem.onDeviceChange += OnDeviceChange;
         if (inputActions != null)
         {
             anyKeyAction = inputActions.FindActionMap("AnyKey").FindAction("AnyKey");
-            anyKeyAction.started += OnAnyKeyPerformed;
         }
+        anyKeyAction.started += OnAnyKeyPerformed;
     }
 
     void Update()
     {
         if (allowControllerAssigns && !anyKeyAction.enabled)
+        {
             anyKeyAction.Enable();
+        }
         else if (!allowControllerAssigns && anyKeyAction.enabled)
+        {
             anyKeyAction.Disable();
+        }
     }
 
     private void OnDisable()
     {
         InputSystem.onDeviceChange -= OnDeviceChange;
+        if (inputActions != null)
+        {
+            anyKeyAction = inputActions.FindActionMap("AnyKey").FindAction("AnyKey");
+        }
+        anyKeyAction.started -= OnAnyKeyPerformed;
+        Instance = null;
     }
 
     void Start()
@@ -84,8 +109,12 @@ public class InputManager : MonoBehaviour
                     playerControllerDeviceIds[i] = context.control.device.deviceId;
                     Debug.Log("Device: " + context.control.device.name + " (Id: " + context.control.device.deviceId
                     + ") is now assigned to Player" + (i + 1) + ".");
+                    UpdateDeviceIdsEvent.Invoke(this);
                     break;
                 }
         lastConnect = Time.time;
     }
+
+    public InputAction FindInputAction(string actionMapName, string actionName)
+        => inputActions.FindActionMap(actionMapName).FindAction(actionName);
 }

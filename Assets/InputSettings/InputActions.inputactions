@@ -11,13 +11,22 @@
                     "id": "c5ca7a3c-817b-433b-bcd6-6858f0b5e396",
                     "expectedControlType": "Vector2",
                     "processors": "",
-                    "interactions": "",
+                    "interactions": "Hold(duration=0.001,pressPoint=0.125)",
                     "initialStateCheck": true
                 },
                 {
                     "name": "Jump",
                     "type": "Button",
                     "id": "d07b1911-74b2-4ddd-8dd3-2a993be36b58",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Shield",
+                    "type": "Button",
+                    "id": "0c80924e-8a36-40fa-8759-6ab383aca53e",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -110,6 +119,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4395c5f1-c36d-4691-960d-9e8364bd2878",
+                    "path": "<Gamepad>/rightTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Shield",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0113b544-40be-4d6d-a429-e4aafb2411ce",
+                    "path": "<Gamepad>/leftTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Shield",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
