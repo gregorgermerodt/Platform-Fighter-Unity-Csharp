@@ -24,7 +24,7 @@ public class MovesetBuilder
 {
     public Transform fighterTransform { get; private set; }
     public HashSet<string> states { get; private set; }
-    public Dictionary<string, int> flags { get; private set; }
+    public Dictionary<string, double> uniforms { get; private set; }
     public Dictionary<string, InputActionWrapper> inputActions { get; private set; }
     public List<GeneralAnimationCommandWrapper> generalAcmds { get; private set; }
     public Dictionary<string, AnimationCommand> acmds { get; private set; }
@@ -35,7 +35,7 @@ public class MovesetBuilder
     {
         this.acmds = new Dictionary<string, AnimationCommand>();
         this.states = new HashSet<string>();
-        this.flags = new Dictionary<string, int>();
+        this.uniforms = new Dictionary<string, double>();
         this.inputActions = new Dictionary<string, InputActionWrapper>();
         this.generalAcmds = new List<GeneralAnimationCommandWrapper>();
         this.lookDirection = FighterMoveset.LookDirection.RIGHT;
@@ -59,17 +59,17 @@ public class MovesetBuilder
         return this;
     }
 
-    public MovesetBuilder AddFlag(string key, int value = 0)
+    public MovesetBuilder AddUniform(string key, double value = 0.0)
     {
-        flags[key] = value;
+        uniforms[key] = value;
         return this;
     }
 
-    public MovesetBuilder AddFlags(Dictionary<string, int> flags)
+    public MovesetBuilder AddUniforms(Dictionary<string, double> uniforms)
     {
-        foreach (var pair in flags)
+        foreach (var pair in uniforms)
         {
-            AddFlag(pair.Key, pair.Value);
+            AddUniform(pair.Key, pair.Value);
         }
         return this;
     }
@@ -152,11 +152,11 @@ public class MovesetBuilder
         return this;
     }
 
-    public MovesetBuilder MergeData(HashSet<string> states, Dictionary<string, int> flags, Dictionary<string, InputActionWrapper> inputActions,
+    public MovesetBuilder MergeData(HashSet<string> states, Dictionary<string, double> uniforms, Dictionary<string, InputActionWrapper> inputActions,
     List<GeneralAnimationCommandWrapper> generalAcmds, Dictionary<string, AnimationCommand> acmds, FighterMoveset.LookDirection lookDirection)
     {
         AddStates(states);
-        AddFlags(flags);
+        AddUniforms(uniforms);
         AddInputActions(inputActions);
         AddGeneralAcmds(generalAcmds);
         AddAcmds(acmds);
@@ -166,14 +166,14 @@ public class MovesetBuilder
 
     public MovesetBuilder MergeData(FighterMoveset fighterMoveset)
     {
-        MergeData(fighterMoveset.states, fighterMoveset.flags, fighterMoveset.inputActions,
+        MergeData(fighterMoveset.states, fighterMoveset.uniforms, fighterMoveset.inputActions,
         fighterMoveset.generalAcmds, fighterMoveset.acmds, fighterMoveset.lookDirection);
         return this;
     }
 
     public MovesetBuilder MergeData(MovesetBuilder fighterMovesetBuilder)
     {
-        MergeData(fighterMovesetBuilder.states, fighterMovesetBuilder.flags, fighterMovesetBuilder.inputActions,
+        MergeData(fighterMovesetBuilder.states, fighterMovesetBuilder.uniforms, fighterMovesetBuilder.inputActions,
         fighterMovesetBuilder.generalAcmds, fighterMovesetBuilder.acmds, fighterMovesetBuilder.lookDirection);
         return this;
     }
@@ -184,6 +184,6 @@ public class MovesetBuilder
             throw new ArgumentNullException(nameof(fighterPhysics), "fighterTransform darf nicht null sein.");
 
         generalAcmds.Sort((gacmd1, gacmd2) => gacmd1.priority.CompareTo(gacmd2.priority));
-        return new FighterMoveset(fighterPhysics, acmds, generalAcmds, states, flags, inputActions, lookDirection);
+        return new FighterMoveset(fighterPhysics, acmds, generalAcmds, states, uniforms, inputActions, lookDirection);
     }
 }

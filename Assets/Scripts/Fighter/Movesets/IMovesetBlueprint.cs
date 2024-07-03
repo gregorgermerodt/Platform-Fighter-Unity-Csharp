@@ -7,7 +7,7 @@ public abstract class IMovesetBlueprint : UnityEngine.Object
     public MovesetBuilder movesetBuilder { get; protected set; } = new MovesetBuilder();
 
     protected abstract HashSet<string> DefineStates();
-    protected abstract Dictionary<string, int> DefineFlags();
+    protected abstract Dictionary<string, double> DefineUniforms();
     protected abstract List<InputAction> DefineInputActions();
     protected abstract List<GeneralAnimationCommandWrapper> DefineGeneralAcmds();
     protected abstract Dictionary<string, AnimationCommand> DefineAcmds();
@@ -15,7 +15,7 @@ public abstract class IMovesetBlueprint : UnityEngine.Object
     public IMovesetBlueprint()
     {
         movesetBuilder.AddStates(DefineStates());
-        movesetBuilder.AddFlags(DefineFlags());
+        movesetBuilder.AddUniforms(DefineUniforms());
         movesetBuilder.AddInputActions(DefineInputActions());
         movesetBuilder.AddGeneralAcmds(DefineGeneralAcmds());
         movesetBuilder.AddAcmds(DefineAcmds());

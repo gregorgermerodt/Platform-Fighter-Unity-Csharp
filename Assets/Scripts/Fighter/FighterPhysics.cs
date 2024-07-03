@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using UnityEngine.Rendering.Universal.Internal;
+using System.Data.Common;
 
 public class EnviromentalCollisionBox
 {
@@ -40,24 +41,29 @@ public class FighterPhysics : MonoBehaviour
     [SerializeField] private float REGULAR_FALL_GRAVITY = 9.81f;
     [SerializeField] private float JUMP_FORCE = 2.5f;
     [SerializeField] private float TERMINAL_FALL_VELOCITY = 2.0f;
-    [SerializeField] private LayerMask GROUND_MASKS;
+    [SerializeField] private float GROUND_PROXIMITY_TOLERANCE = 0.05f;
+    [SerializeField] private float MAX_STEP_HEIGHT = 0.25f;
 
     [SerializeField] private EnviromentalCollisionBox ecb;
+    [SerializeField] private LayerMask groundLayerMasks;
 
     [field: SerializeField] public Vector2 velocity { get; protected set; } = Vector2.zero;
-    public Vector3 velocity3d { get => new Vector3(velocity.x, velocity.y, 0.0f); }
-    [SerializeField] private bool isGrounded = false;
+    [field: SerializeField] public bool isGrounded { get; private set; } = false;
+    [field: SerializeField] public Collider floorCollider { get; private set; }
 
     void Awake()
     {
         ecb = new EnviromentalCollisionBox(GetComponent<PolygonCollider2D>());
     }
 
-    void FixedUpdate()
+    void Update()
     {
         UpdateVelocity();
-        UpdatePosition();
-
+        CheckGrounding();
+        if (transform.position.y < -10)
+        {
+            transform.position = new Vector3(0.0f, 25.0f, 0.0f);
+        }
         //CheckForGroundCollision();
 
         //QualitySettings.vSyncCount = 0;
@@ -72,60 +78,114 @@ public class FighterPhysics : MonoBehaviour
         // Gravity
         if (!isGrounded)
         {
-            velocity = new Vector2(velocity.x, Mathf.Max(velocity.y - REGULAR_FALL_GRAVITY * Time.fixedDeltaTime, -TERMINAL_FALL_VELOCITY));
-        }
-
-        // Check if path is possible
-        //Vector3 direction = new Vector3(velocity.x, velocity.y, 0).normalized;
-        //RaycastHit hit;
-        //if (Physics.Raycast(transform.position, direction, out hit, velocity.magnitude, GROUND_MASKS))
-        //{
-        //    hit.
-        //}
-        //else
-        //{
-        //    Debug.Log("Pfad frei");
-        //}
-    }
-
-
-
-    private void UpdatePosition()
-    {
-        if (velocity == Vector2.zero)
-            return;
-        Vector3 newPosition = transform.position + velocity3d * Time.deltaTime;
-        float raycastLength = velocity3d.magnitude * Time.deltaTime;
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, velocity3d.normalized, raycastLength, 8);
-        if (hit.collider != null)
-        {
-            Debug.Log(hit.collider.gameObject.layer);
-
-            velocity = new Vector2(velocity.x, 0);
-            transform.position = hit.point;
+            velocity = new Vector2(velocity.x, velocity.y + Mathf.Max(-REGULAR_FALL_GRAVITY * Time.deltaTime, -TERMINAL_FALL_VELOCITY));
         }
         else
         {
-            transform.position = newPosition;
+            velocity = new Vector2(velocity.x, Mathf.Max(velocity.y, 0.0f));
         }
-        if (transform.position.y < -5)
+    }
+
+    private void CheckGrounding()
+    {
+        Vector3 velocity3d = new Vector3(velocity.x, velocity.y, 0.0f);
+        Vector3 possibleNewPosition = transform.position + velocity3d * Time.deltaTime;
+        Vector3 tolleranceAboveGround = new Vector3(0.0f, GROUND_PROXIMITY_TOLERANCE, 0.0f);
+
+        if (velocity.y > 0.0f)
         {
-            transform.position += new Vector3(0, 20, 0);
+            floorCollider = null;
+            isGrounded = false;
         }
+        //else if (velocity.x == 0.0f)
+        //{
+        //    RaycastHit floorHit;
+        //    bool isFloorHit = Physics.Raycast(
+        //        transform.position + Vector3.up * MAX_STEP_HEIGHT,
+        //        -Vector3.up,
+        //        out floorHit,
+        //        MAX_STEP_HEIGHT,
+        //        groundLayerMasks
+        //    );
+        //    if (isFloorHit)
+        //    {
+        //        velocity = new Vector2(velocity.x, Mathf.Max(0.0f, velocity.y));
+        //        possibleNewPosition = floorHit.point + tolleranceAboveGround;
+        //        floorCollider = floorHit.collider;
+        //        isGrounded = true;
+        //    }
+        //}
+        else
+        {
+            float downCheckDistance = isGrounded ? MAX_STEP_HEIGHT : GROUND_PROXIMITY_TOLERANCE;
+            Vector3 horizontalPossiblePosition = new Vector3(possibleNewPosition.x, transform.position.y, 0.0f);
+            RaycastHit upSlopeHit;
+            bool isUpSlopeHit = Physics.Raycast(
+                horizontalPossiblePosition + Vector3.up * downCheckDistance,
+                -Vector3.up,
+                out upSlopeHit,
+                downCheckDistance,
+                groundLayerMasks
+            );
+            RaycastHit downSlopeHit;
+            bool isDownSlopeHit = Physics.Raycast(
+                horizontalPossiblePosition,
+                -Vector3.up,
+                out downSlopeHit,
+                downCheckDistance,
+                groundLayerMasks
+            );
+            if (!isUpSlopeHit && !isDownSlopeHit)
+            {
+                floorCollider = null;
+                isGrounded = false;
+            }
+            else
+            {
+                if (floorCollider == null)
+                {
+                    if (isUpSlopeHit)
+                    {
+                        possibleNewPosition = upSlopeHit.point + tolleranceAboveGround;
+                        floorCollider = upSlopeHit.collider;
+                    }
+                    else // if (isDownSlopeHit) 
+                    {
+                        possibleNewPosition = downSlopeHit.point + tolleranceAboveGround;
+                        floorCollider = downSlopeHit.collider;
+                    }
+                }
+                else
+                {
+                    if (upSlopeHit.collider == floorCollider)
+                    {
+                        possibleNewPosition = upSlopeHit.point + tolleranceAboveGround;
+                    }
+                    else
+                    {
+                        possibleNewPosition = downSlopeHit.point + tolleranceAboveGround;
+                        floorCollider = downSlopeHit.collider;
+                    }
+                }
+                isGrounded = true;
+            }
+        }
+        transform.position = possibleNewPosition;
     }
 
     void OnDrawGizmos()
     {
+        Vector3 velocity3d = new Vector3(velocity.x, velocity.y, 0.0f);
+        Vector3 possibleNewPosition = transform.position + velocity3d * Time.deltaTime;
+        Vector3 horizontalPossiblePosition = new Vector3(possibleNewPosition.x, transform.position.y, 0.0f);
+
+        Vector3 position = horizontalPossiblePosition;
+        Vector3 direction = Vector3.up * MAX_STEP_HEIGHT;
+
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(transform.position, transform.position + velocity3d * Time.deltaTime);
+        Gizmos.DrawLine(position, position + direction);
+        Gizmos.DrawLine(position, position - direction);
     }
-
-
-
-    //private void CheckForGroundCollision()
-    //{
-    //    isGrounded = Physics.CheckSphere(position: ecb[EnviromentalCollisionBox.ECBPosition.BOTTOM], radius: 0.1f, layerMask: GROUND_MASKS);
-    //}
 
     //private void UpdateUpVelocity()
     //{
@@ -157,14 +217,6 @@ public class FighterPhysics : MonoBehaviour
     public void SetVerticalVelocity(float yVelocity) => this.velocity = new Vector2(this.velocity.x, yVelocity);
     public void AddHorizontalVelocity(float xVelocity) => this.velocity += new Vector2(xVelocity, this.velocity.y);
     public void AddVerticalVelocity(float yVelocity) => this.velocity += new Vector2(this.velocity.x, yVelocity);
-
-    public void Jump()
-    {
-        if (isGrounded)
-        {
-            AddVelocity(new Vector2(0.0f, JUMP_FORCE));
-        }
-    }
 
     //private void OnCollisionEnter(Collision collision)
     //{

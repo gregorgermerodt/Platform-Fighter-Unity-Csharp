@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ public class FighterMoveset
     public FighterPhysics fighterPhysics;
 
     public HashSet<string> states { get; private set; }
-    public Dictionary<string, int> flags { get; private set; }
+    public Dictionary<string, double> uniforms { get; private set; }
     public Dictionary<string, InputActionWrapper> inputActions { get; private set; }
     public List<GeneralAnimationCommandWrapper> generalAcmds { get; private set; }
     public Dictionary<string, AnimationCommand> acmds { get; private set; }
@@ -26,13 +27,15 @@ public class FighterMoveset
     public int frameCounter { get; private set; } = 0;
     public int frameTarget { get; private set; } = 0;
 
-    public FighterMoveset(FighterPhysics fighterPhysics, Dictionary<string, AnimationCommand> acmds, List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states, Dictionary<string, int> flags, Dictionary<string, InputActionWrapper> inputActions, LookDirection lookDirection)
+    public FighterMoveset(FighterPhysics fighterPhysics, Dictionary<string, AnimationCommand> acmds,
+        List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states,
+        Dictionary<string, double> uniforms, Dictionary<string, InputActionWrapper> inputActions, LookDirection lookDirection)
     {
         this.fighterPhysics = fighterPhysics;
 
         this.acmds = acmds;
         this.states = states;
-        this.flags = flags;
+        this.uniforms = uniforms;
         this.inputActions = inputActions;
         this.generalAcmds = generalAcmds;
 
@@ -61,7 +64,9 @@ public class FighterMoveset
         {
             gacmd.acmd(this);
         }
-
+        if (frameCounter == 0)
+            Debug.Log("Running ACMD: \"" + currentAcmdName + "\", Current State: " + currentState);
+            
         currentAcmd(this);
 
         foreach (var pair in inputActions)
@@ -71,11 +76,11 @@ public class FighterMoveset
         frameCounter++;
     }
 
-    public void TransitionToMove(string acmdName, bool resetFrameCounter = true)
+    public void ForceTransitionToAcmd(string acmdName, bool resetFrameCounter = true)
     {
         if (acmds.ContainsKey(acmdName))
         {
-            frameCounter = resetFrameCounter ? -1 : frameCounter;
+            frameCounter = resetFrameCounter ? 0 : frameCounter;
             currentAcmdName = acmdName;
             currentAcmd = acmds.GetValueOrDefault(acmdName);
         }
@@ -84,10 +89,35 @@ public class FighterMoveset
             Debug.LogWarning("TransitionToMove(): ACMD with name \"" + acmdName + "\" not found. \n");
             currentAcmd = acmds.GetValueOrDefault("error_acmd");
         }
+        Debug.Log("Force-transitioned to ACMD: " + currentAcmdName);
+    }
+
+    public void TransitionToAcmd(string acmdName, bool resetFrameCounter = true)
+    {
+        if (currentAcmdName == acmdName)
+        {
+            return;
+        }
+        if (acmds.ContainsKey(acmdName))
+        {
+            frameCounter = resetFrameCounter ? 0 : frameCounter;
+            currentAcmdName = acmdName;
+            currentAcmd = acmds.GetValueOrDefault(acmdName);
+        }
+        else
+        {
+            Debug.LogWarning("TransitionToMove(): ACMD with name \"" + acmdName + "\" not found. \n");
+            currentAcmd = acmds.GetValueOrDefault("error_acmd");
+        }
+        //Debug.Log("Transitioned to ACMD: " + currentAcmdName);
     }
 
     public void TransitionToState(string stateName)
     {
+        if (currentState == stateName)
+        {
+            return;
+        }
         if (states.Contains(stateName))
         {
             currentState = stateName;
@@ -96,49 +126,59 @@ public class FighterMoveset
         {
             Debug.LogWarning("TransitionToState(): State with name \"" + stateName + "\" not found. \n");
         }
+        //Debug.Log("Transitioned to State: " + currentState);
     }
 
-    public void SetFlagValue(string flagName, int value)
+    public void SetUniformValue(string uniformName, double value)
     {
-        if (flags.ContainsKey(flagName))
+        if (uniforms.ContainsKey(uniformName))
         {
-            flags[flagName] = value;
+            uniforms[uniformName] = value;
         }
         else
         {
-            Debug.LogWarning("SetFlagValue(): Flag with name \"" + flagName + "\" not found. \n");
+            Debug.LogWarning("SetUniformValue(): Uniform with name \"" + uniformName + "\" not found. \n");
         }
+        Debug.Log("Set Uniform " + uniformName + " to value " + value);
     }
 
-    public bool IsFlagSet(string flagName)
+    public bool IsUniformSet(string uniformName)
     {
-        if (flags.ContainsKey(flagName))
+        if (uniforms.ContainsKey(uniformName))
         {
-            return flags[flagName] != 0;
+            return uniforms[uniformName] != 0.0;
         }
         else
         {
-            Debug.LogWarning("IsFlagSet(): Flag with name \"" + flagName + "\" not found. \n");
+            Debug.LogWarning("IsUniformSet(): Uniform with name \"" + uniformName + "\" not found. \n");
         }
         return false;
     }
 
-    public int GetFlagValue(string flagName)
+    public double GetUniformValue(string uniformName)
     {
-        if (flags.ContainsKey(flagName))
+        if (uniforms.ContainsKey(uniformName))
         {
-            return flags[flagName];
+            return uniforms[uniformName];
         }
         else
         {
-            Debug.LogWarning("GetFlagValue(): Flag with name \"" + flagName + "\" not found. \n");
+            Debug.LogWarning("GetUniformValue(): Uniform with name \"" + uniformName + "\" not found. \n");
         }
         return 0;
     }
 
-    public void WaitUntilFrame(int frame)
+    public void OnFrame(int frame)
     {
-        frameTarget = frame;
+        frameTarget = Math.Max(frameTarget, frame);
+    }
+
+    public void LoopForFrames(int firstFrame, int lastIncludedFrame)
+    {
+        if (frameCounter >= firstFrame || frameCounter <= lastIncludedFrame)
+        {
+            frameTarget = frameCounter;
+        }
     }
 
     public bool CanExecute()

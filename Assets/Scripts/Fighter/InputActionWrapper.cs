@@ -9,6 +9,7 @@ public class InputActionWrapper
     public bool isStarted { get; private set; } = false;
     public bool isPerformed { get; private set; } = false;
     public bool isCanceled { get; private set; } = false;
+    public bool isNoAction { get => !isStarted && !isPerformed && !isCanceled; }
 
     public InputActionWrapper(InputAction inputAction)
     {
@@ -33,7 +34,11 @@ public class InputActionWrapper
         isCanceled = false;
     }
 
-    private void SetStarted(InputAction.CallbackContext callbackContext) => isStarted = true;
+    private void SetStarted(InputAction.CallbackContext callbackContext) {
+        //Debug.Log(inputAction.name + " is started!");
+        isStarted = true;
+    }
+
     private void SetPerformed(InputAction.CallbackContext callbackContext) => isPerformed = true;
     private void SetCanceled(InputAction.CallbackContext callbackContext)
     {

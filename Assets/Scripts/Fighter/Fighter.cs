@@ -19,19 +19,23 @@ public class Fighter : MonoBehaviour
     {
         InputManager inputManager = FindAnyObjectByType<InputManager>();
         inputManager.UpdateDeviceIdsEvent += UpdateDeviceIds;
-
-        InputActionMap inputActionMap = inputManager.inputActions.FindActionMap("InGame");
         fighterMoveset = MovesetRegistry.GetMoveset("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterPhysics>());
-
         UpdateDeviceIds(inputManager);
     }
 
     void FixedUpdate()
     {
+        if (fighterMoveset == null)
+        {
+            InputManager inputManager = FindAnyObjectByType<InputManager>();
+            inputManager.UpdateDeviceIdsEvent += UpdateDeviceIds;
+            fighterMoveset = MovesetRegistry.GetMoveset("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterPhysics>());
+            UpdateDeviceIds(inputManager);
+        }
         fighterMoveset.UpdateTick();
     }
 
-    void OnDestroy()
+    void OnDisable()
     {
         InputManager inputManager = FindAnyObjectByType<InputManager>();
         if (inputManager != null)
