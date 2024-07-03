@@ -11,9 +11,9 @@ public class Fighter : MonoBehaviour
         Luigi
     }
 
-    public int playerNumber;
+    [SerializeField] public int playerNumber;
     [SerializeField] public FighterMoveset fighterMoveset;
-    [SerializeField] public CharacterType characterType { get; private set; }
+    [field: SerializeField] public CharacterType characterType { get; private set; }
 
     void Start()
     {
@@ -21,14 +21,23 @@ public class Fighter : MonoBehaviour
         inputManager.UpdateDeviceIdsEvent += UpdateDeviceIds;
 
         InputActionMap inputActionMap = inputManager.inputActions.FindActionMap("InGame");
-        fighterMoveset = MovesetRegistry.GetMoveset("BASIC_MOVESET").BuildFighterMoveset(transform);
-        
+        fighterMoveset = MovesetRegistry.GetMoveset("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterPhysics>());
+
         UpdateDeviceIds(inputManager);
     }
 
     void FixedUpdate()
     {
-        fighterMoveset.UpdateTick(transform);
+        fighterMoveset.UpdateTick();
+    }
+
+    void OnDestroy()
+    {
+        InputManager inputManager = FindAnyObjectByType<InputManager>();
+        if (inputManager != null)
+        {
+            inputManager.UpdateDeviceIdsEvent -= UpdateDeviceIds;
+        }
     }
 
     protected void UpdateDeviceIds(InputManager inputManager)

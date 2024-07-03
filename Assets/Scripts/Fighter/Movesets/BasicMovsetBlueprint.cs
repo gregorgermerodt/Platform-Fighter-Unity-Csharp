@@ -44,10 +44,10 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
         {
             "WALKING_ACMD", fm =>
             {
-                if (fm.fighterTranform == null) {
+                if (fm.fighterPhysics.transform == null) {
                     int i = fm.frameCounter + 1;
                 }
-                fm.fighterTranform.position += new Vector3(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x, 0.0f, 0.0f) * 10.0f * Time.deltaTime;
+                fm.fighterPhysics.transform.position += new Vector3(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x, 0.0f, 0.0f) * 10.0f * Time.deltaTime;
             }
         },
         {

@@ -9,7 +9,7 @@ public class FighterMoveset
         LEFT
     }
 
-    public Transform fighterTranform {get; private set;}
+    public FighterPhysics fighterPhysics;
 
     public HashSet<string> states { get; private set; }
     public Dictionary<string, int> flags { get; private set; }
@@ -26,9 +26,9 @@ public class FighterMoveset
     public int frameCounter { get; private set; } = 0;
     public int frameTarget { get; private set; } = 0;
 
-    public FighterMoveset(Transform fighterTranform, Dictionary<string, AnimationCommand> acmds, List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states, Dictionary<string, int> flags, Dictionary<string, InputActionWrapper> inputActions, LookDirection lookDirection)
+    public FighterMoveset(FighterPhysics fighterPhysics, Dictionary<string, AnimationCommand> acmds, List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states, Dictionary<string, int> flags, Dictionary<string, InputActionWrapper> inputActions, LookDirection lookDirection)
     {
-        this.fighterTranform = fighterTranform;
+        this.fighterPhysics = fighterPhysics;
 
         this.acmds = acmds;
         this.states = states;
@@ -55,9 +55,8 @@ public class FighterMoveset
             states.Add("error_state");
     }
 
-    public void UpdateTick(Transform newTranform)
+    public void UpdateTick()
     {
-        fighterTranform = newTranform;
         foreach (var gacmd in generalAcmds)
         {
             gacmd.acmd(this);
