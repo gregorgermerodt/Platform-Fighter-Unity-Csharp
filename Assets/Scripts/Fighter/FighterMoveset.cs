@@ -25,7 +25,10 @@ public class FighterMoveset
     public string currentState { get; private set; }
 
     public int frameCounter { get; private set; } = 0;
-    public int frameTarget { get; private set; } = 0;
+    public int targetFrame { get; private set; } = 0;
+    public bool isTargetFrameSet { get; private set; }
+    public bool isFrameExecuted { get; private set; }
+
 
     public FighterMoveset(FighterPhysics fighterPhysics, Dictionary<string, AnimationCommand> acmds,
         List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states,
@@ -60,14 +63,20 @@ public class FighterMoveset
 
     public void UpdateTick()
     {
+        isTargetFrameSet = false;
+        isFrameExecuted = false;
+
+        targetFrame = 0;
         foreach (var gacmd in generalAcmds)
         {
             gacmd.acmd(this);
         }
         if (frameCounter == 0)
             Debug.Log("Running ACMD: \"" + currentAcmdName + "\", Current State: " + currentState);
-            
+
         currentAcmd(this);
+
+        fighterPhysics.UpdateTick();
 
         foreach (var pair in inputActions)
         {
@@ -170,19 +179,34 @@ public class FighterMoveset
 
     public void OnFrame(int frame)
     {
-        frameTarget = Math.Max(frameTarget, frame);
+        if (isTargetFrameSet)
+            return;
+
+        if (frameCounter <= frame)
+        {
+            targetFrame = frame;
+            isTargetFrameSet = true;
+        }
     }
 
     public void LoopForFrames(int firstFrame, int lastIncludedFrame)
     {
-        if (frameCounter >= firstFrame || frameCounter <= lastIncludedFrame)
+        if (isTargetFrameSet)
+            return;
+
+        if (frameCounter >= firstFrame && frameCounter <= lastIncludedFrame)
         {
-            frameTarget = frameCounter;
+            isTargetFrameSet = true;
+            targetFrame = frameCounter;
         }
     }
 
     public bool CanExecute()
     {
-        return frameCounter == frameTarget;
+        if (isFrameExecuted)
+            return false;
+
+        isFrameExecuted = frameCounter == targetFrame;
+        return isFrameExecuted;
     }
 }
