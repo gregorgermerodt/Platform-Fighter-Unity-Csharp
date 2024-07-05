@@ -5,21 +5,28 @@ using UnityEngine.UIElements;
 [RequireComponent(typeof(Rigidbody), typeof(BoxCollider))]
 public class FighterController : MonoBehaviour
 {
-    [SerializeField] private float FALL_SPEED = 9.81f;
-    [SerializeField] private float TERMINAL_FALL_VELOCITY = 2.0f;
-    [SerializeField] private float DOWN_CHECK_DISTANCE = 2.0f;
+    [SerializeField] private float DOWN_CHECK_DISTANCE = 0.2f;
     [SerializeField] private float FIGHTER_WIDTH = 1.0f;
+    [SerializeField] private float MAX_SLOPE_ANGLE_DEGREE = 45;
 
     private new BoxCollider collider;
-    private new Rigidbody rigidbody;
-    public bool isGrounded;
-
+    //private new Rigidbody rigidbody;
     [SerializeField] private LayerMask groundLayerMasks;
     [SerializeField] private LayerMask platformLayerMasks;
 
+    [SerializeField] public Vector3 currentVelocity;
+    //[SerializeField] private Vector3 accumalatedVelocity;
+
+    [SerializeField] private Collider floorCollider;
+    [field: SerializeField] public bool isGrounded { get; private set; } = false;
+    [field: SerializeField] public bool wasGrounded { get; private set; } = false;
+
+    [field: SerializeField] public bool isInHitStun { get; private set; } = false;
+
+
     void Awake()
     {
-        rigidbody = GetComponent<Rigidbody>();
+        //rigidbody = GetComponent<Rigidbody>();
     }
 
     void OnValidate()
@@ -28,7 +35,7 @@ public class FighterController : MonoBehaviour
         platformLayerMasks = 1 << LayerMask.NameToLayer("Platform");
 
         collider = GetComponent<BoxCollider>();
-        collider.center = transform.position + Vector3.up * DOWN_CHECK_DISTANCE;
+        collider.center = Vector3.up * DOWN_CHECK_DISTANCE;
         collider.size = new Vector3(
             FIGHTER_WIDTH,
             DOWN_CHECK_DISTANCE,
@@ -38,27 +45,26 @@ public class FighterController : MonoBehaviour
         collider.excludeLayers = 1 << LayerMask.NameToLayer("Player");
         collider.isTrigger = true;
 
-        rigidbody = GetComponent<Rigidbody>();
-        rigidbody.automaticCenterOfMass = false;
-        rigidbody.automaticInertiaTensor = false;
-        rigidbody.useGravity = true;
-        rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-        rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-        rigidbody.freezeRotation = true;
-        rigidbody.constraints |= RigidbodyConstraints.FreezePositionZ;
-        rigidbody.includeLayers = groundLayerMasks;
+        //rigidbody = GetComponent<Rigidbody>();
+        //rigidbody.automaticCenterOfMass = false;
+        //rigidbody.automaticInertiaTensor = false;
+        //rigidbody.useGravity = true;
+        //rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+        //rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        //rigidbody.freezeRotation = true;
+        //rigidbody.constraints |= RigidbodyConstraints.FreezePositionZ;
+        //rigidbody.includeLayers = groundLayerMasks;
     }
 
     public void UpdateTick()
     {
-        if (rigidbody.velocity.y < -TERMINAL_FALL_VELOCITY)
-        {
-            rigidbody.velocity += Vector3.up * FALL_SPEED;
-            if (rigidbody.velocity.y > -TERMINAL_FALL_VELOCITY)
-            {
-                rigidbody.velocity = new Vector3(rigidbody.velocity.x, -TERMINAL_FALL_VELOCITY, 0.0f);
-            }
-        }
+        wasGrounded = isGrounded;
+        isGrounded = false;
+
+        if (currentVelocity.y <= 0.0f)
+            HandleGround();
+
+        transform.Translate(currentVelocity, Space.World);
 
         if (transform.position.y < -10)
         {
@@ -66,36 +72,46 @@ public class FighterController : MonoBehaviour
         }
     }
 
+    private void HandleGround()
+    {
+        Vector3 origin = transform.position + new Vector3(currentVelocity.x, DOWN_CHECK_DISTANCE, 0.0f);
+        Vector3 dir = currentVelocity.y != 0 ? currentVelocity.normalized : new Vector3(currentVelocity.x, -DOWN_CHECK_DISTANCE, 0.0f).normalized;
+        float rayLength = DOWN_CHECK_DISTANCE * 2 + currentVelocity.magnitude;
+        RaycastHit hitInfo;
+        bool hit = Physics.Raycast(
+            origin,
+            dir,
+            out hitInfo,
+            rayLength,
+            groundLayerMasks | platformLayerMasks
+        );
+        if (hit)
+        {
+            if (Vector3.Dot(-Vector3.up, hitInfo.normal) < 0)
+            {
+                if (hitInfo.distance > DOWN_CHECK_DISTANCE * 2)
+                {
+                    transform.Translate((hitInfo.point - transform.position) * 0.5f, Space.World);
+                    currentVelocity.y = -DOWN_CHECK_DISTANCE;
+                }
+                else
+                {
+                    transform.position = hitInfo.point;
+                    currentVelocity.y = 0.0f;
+                }
+                isGrounded = true;
+            }
+        }
+    }
+
     public void OnCollisionEnter(Collision other)
     {
-        CheckForGround(other);
+        //CheckForGround(other);
     }
 
     public void OnCollisionStay(Collision other)
     {
-        CheckForGround(other);
-    }
-
-    private void CheckForGround(Collision other)
-    {
-        RaycastHit hitInfo;
-        bool isHit = Physics.Raycast(
-            transform.position + Vector3.up * DOWN_CHECK_DISTANCE,
-            -Vector3.up,
-            out hitInfo,
-            DOWN_CHECK_DISTANCE * 3,
-            groundLayerMasks | platformLayerMasks
-        );
-        if (isHit)
-        {
-            Physics.IgnoreCollision(collider, other.collider, false);
-            transform.position = hitInfo.point;
-            isGrounded = true;
-        }
-        else
-        {
-            Physics.IgnoreCollision(collider, other.collider, true);
-        }
+        //CheckForGround(other);
     }
 
     public void OnCollisionExit(Collision other)
@@ -103,19 +119,53 @@ public class FighterController : MonoBehaviour
         if ((other.gameObject.layer & (groundLayerMasks | platformLayerMasks)) > 0)
         {
             Physics.IgnoreCollision(collider, other.collider, false);
-            rigidbody.isKinematic = true;
+            //rigidbody.isKinematic = true;
             isGrounded = false;
         }
     }
 
-    //public void FallThroughPlatform() => isFallingThroguhQueued = true;
-    public void SetVelocity(Vector2 velocity) => rigidbody.velocity = new Vector3(velocity.x, velocity.y, 0.0f);
-    public void AddVelocity(Vector2 velocity) => rigidbody.velocity += new Vector3(velocity.x, velocity.y, 0.0f);
-    public void SetHorizontalVelocity(float xVelocity) => rigidbody.velocity = new Vector3(xVelocity, rigidbody.velocity.y, 0.0f);
-    public void SetVerticalVelocity(float yVelocity) => rigidbody.velocity = new Vector3(rigidbody.velocity.x, yVelocity, 0.0f);
-    public void AddHorizontalVelocity(float xVelocity) => rigidbody.velocity += new Vector3(xVelocity, rigidbody.velocity.y, 0.0f);
-    public void AddVerticalVelocity(float yVelocity) => rigidbody.velocity += new Vector3(rigidbody.velocity.x, yVelocity, 0.0f);
+    public void ApproachHorizontalVelocity(float acceleration, float targetVelocityX, bool capToTargetVelocity = true)
+    {
+        acceleration = Mathf.Abs(acceleration);
 
-    public float GetVelocityX() => rigidbody.velocity.x;
-    public float GetVelocityY() => rigidbody.velocity.y;
+        float direction = Mathf.Sign(targetVelocityX - currentVelocity.x);
+        float newVelocityX = currentVelocity.x + (direction * acceleration * Time.fixedDeltaTime);
+
+        if (capToTargetVelocity && direction * newVelocityX >= direction * targetVelocityX)
+            currentVelocity = new Vector3(targetVelocityX, currentVelocity.y, currentVelocity.z);
+        else
+            currentVelocity = new Vector3(newVelocityX, currentVelocity.y, currentVelocity.z);
+    }
+
+    public void ApproachVertivalVelocity(float acceleration, float targetVelocityY, bool capToTargetVelocity = true)
+    {
+        acceleration = Mathf.Abs(acceleration);
+
+        float direction = Mathf.Sign(targetVelocityY - currentVelocity.y);
+        float newVelocityY = currentVelocity.y + (direction * acceleration * Time.fixedDeltaTime);
+
+        if (capToTargetVelocity && direction * newVelocityY >= direction * targetVelocityY)
+            currentVelocity = new Vector3(currentVelocity.x, targetVelocityY, 0.0f);
+        else
+            currentVelocity = new Vector3(currentVelocity.x, newVelocityY, 0.0f);
+    }
+
+    //public void FallThroughPlatform() => isFallingThroguhQueued = true;
+    public void SetVelocity(Vector2 velocity) => currentVelocity = new Vector3(velocity.x, velocity.y, 0.0f);
+    public void SetHorizontalVelocity(float newVelocityX) => currentVelocity = new Vector3(newVelocityX, currentVelocity.y, 0.0f);
+    public void SetVerticalVelocity(float newVelocityY) => currentVelocity = new Vector3(currentVelocity.x, newVelocityY, 0.0f);
+
+    public void AddVelocity(Vector2 velocity) => currentVelocity += new Vector3(velocity.x, velocity.y, 0.0f);
+    public void AddHorizontalVelocity(float addedVelocityX) => currentVelocity += new Vector3(addedVelocityX, 0.0f, 0.0f);
+    public void AddVerticalVelocity(float addedVelocityY) => currentVelocity += new Vector3(0.0f, addedVelocityY, 0.0f);
+
+    public Vector3 GetVelocity() => currentVelocity;
+
+    void OnDrawGizmos()
+    {
+        Vector3 origin = transform.position + new Vector3(currentVelocity.x, DOWN_CHECK_DISTANCE, 0.0f);
+        Vector3 dir = currentVelocity.normalized;
+        float rayLength = DOWN_CHECK_DISTANCE * 2 + currentVelocity.y;
+        Gizmos.DrawRay(origin, dir * rayLength);
+    }
 }

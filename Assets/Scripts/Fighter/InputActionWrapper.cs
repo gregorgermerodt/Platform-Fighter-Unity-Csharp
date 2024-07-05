@@ -9,6 +9,7 @@ public class InputActionWrapper
     public bool isStarted { get; private set; } = false;
     public bool isPerformed { get; private set; } = false;
     public bool isCanceled { get; private set; } = false;
+    public bool isActive { get => isStarted || isPerformed; }
     public bool isNoAction { get => !isStarted && !isPerformed && !isCanceled; }
 
     public InputActionWrapper(InputAction inputAction)

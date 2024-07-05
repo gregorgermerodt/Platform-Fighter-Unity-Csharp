@@ -4,19 +4,27 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public delegate void AnimationCommand(FighterMoveset fm);
+public delegate void ACMD(FighterMoveset fm);
 
-public class GeneralAnimationCommandWrapper
+public class AnimationCommandWrapper
 {
-    public int priority;
     public string description;
-    public AnimationCommand acmd;
+    public ACMD acmd;
 
-    public GeneralAnimationCommandWrapper(int priority, string description, AnimationCommand acmd)
+    public AnimationCommandWrapper(string description, ACMD acmd)
     {
-        this.priority = priority;
         this.description = description;
         this.acmd = acmd;
+    }
+}
+
+public class GeneralAnimationCommandWrapper : AnimationCommandWrapper
+{
+    public int priority;
+
+    public GeneralAnimationCommandWrapper(int priority, string description, ACMD acmd) : base(description, acmd)
+    {
+        this.priority = priority;
     }
 }
 
@@ -24,18 +32,18 @@ public class MovesetBuilder
 {
     public Transform fighterTransform { get; private set; }
     public HashSet<string> states { get; private set; }
-    public Dictionary<string, double> uniforms { get; private set; }
+    public Dictionary<string, bool> flags { get; private set; }
     public Dictionary<string, InputActionWrapper> inputActions { get; private set; }
     public List<GeneralAnimationCommandWrapper> generalAcmds { get; private set; }
-    public Dictionary<string, AnimationCommand> acmds { get; private set; }
+    public Dictionary<string, ACMD> acmds { get; private set; }
 
     public FighterMoveset.LookDirection lookDirection { get; private set; }
 
     public MovesetBuilder()
     {
-        this.acmds = new Dictionary<string, AnimationCommand>();
+        this.acmds = new Dictionary<string, ACMD>();
         this.states = new HashSet<string>();
-        this.uniforms = new Dictionary<string, double>();
+        this.flags = new Dictionary<string, bool>();
         this.inputActions = new Dictionary<string, InputActionWrapper>();
         this.generalAcmds = new List<GeneralAnimationCommandWrapper>();
         this.lookDirection = FighterMoveset.LookDirection.RIGHT;
@@ -59,17 +67,17 @@ public class MovesetBuilder
         return this;
     }
 
-    public MovesetBuilder AddUniform(string key, double value = 0.0)
+    public MovesetBuilder AddFlag(string key, bool value = false)
     {
-        uniforms[key] = value;
+        flags[key] = value;
         return this;
     }
 
-    public MovesetBuilder AddUniforms(Dictionary<string, double> uniforms)
+    public MovesetBuilder AddFlags(Dictionary<string, bool> flags)
     {
-        foreach (var pair in uniforms)
+        foreach (var pair in flags)
         {
-            AddUniform(pair.Key, pair.Value);
+            AddFlag(pair.Key, pair.Value);
         }
         return this;
     }
@@ -113,7 +121,7 @@ public class MovesetBuilder
         return this;
     }
 
-    public MovesetBuilder AddGeneralAcmd(int priority, string description, AnimationCommand acmd)
+    public MovesetBuilder AddGeneralAcmd(int priority, string description, ACMD acmd)
     {
         generalAcmds.Add(new GeneralAnimationCommandWrapper(priority, description, acmd));
         return this;
@@ -137,13 +145,13 @@ public class MovesetBuilder
         return this;
     }
 
-    public MovesetBuilder AddAcmd(string key, AnimationCommand acmd)
+    public MovesetBuilder AddAcmd(string key, ACMD acmd)
     {
         acmds[key] = acmd;
         return this;
     }
 
-    public MovesetBuilder AddAcmds(Dictionary<string, AnimationCommand> acmds)
+    public MovesetBuilder AddAcmds(Dictionary<string, ACMD> acmds)
     {
         foreach (var pair in acmds)
         {
@@ -152,11 +160,11 @@ public class MovesetBuilder
         return this;
     }
 
-    public MovesetBuilder MergeData(HashSet<string> states, Dictionary<string, double> uniforms, Dictionary<string, InputActionWrapper> inputActions,
-    List<GeneralAnimationCommandWrapper> generalAcmds, Dictionary<string, AnimationCommand> acmds, FighterMoveset.LookDirection lookDirection)
+    public MovesetBuilder MergeData(HashSet<string> states, Dictionary<string, bool> flags, Dictionary<string, InputActionWrapper> inputActions,
+    List<GeneralAnimationCommandWrapper> generalAcmds, Dictionary<string, ACMD> acmds, FighterMoveset.LookDirection lookDirection)
     {
         AddStates(states);
-        AddUniforms(uniforms);
+        AddFlags(flags);
         AddInputActions(inputActions);
         AddGeneralAcmds(generalAcmds);
         AddAcmds(acmds);
@@ -166,14 +174,14 @@ public class MovesetBuilder
 
     public MovesetBuilder MergeData(FighterMoveset fighterMoveset)
     {
-        MergeData(fighterMoveset.states, fighterMoveset.uniforms, fighterMoveset.inputActions,
+        MergeData(fighterMoveset.states, fighterMoveset.flags, fighterMoveset.inputActions,
         fighterMoveset.generalAcmds, fighterMoveset.acmds, fighterMoveset.lookDirection);
         return this;
     }
 
     public MovesetBuilder MergeData(MovesetBuilder fighterMovesetBuilder)
     {
-        MergeData(fighterMovesetBuilder.states, fighterMovesetBuilder.uniforms, fighterMovesetBuilder.inputActions,
+        MergeData(fighterMovesetBuilder.states, fighterMovesetBuilder.flags, fighterMovesetBuilder.inputActions,
         fighterMovesetBuilder.generalAcmds, fighterMovesetBuilder.acmds, fighterMovesetBuilder.lookDirection);
         return this;
     }
@@ -184,6 +192,6 @@ public class MovesetBuilder
             throw new ArgumentNullException(nameof(fighterController), "fighterTransform darf nicht null sein.");
 
         generalAcmds.Sort((gacmd1, gacmd2) => gacmd1.priority.CompareTo(gacmd2.priority));
-        return new FighterMoveset(fighterController, acmds, generalAcmds, states, uniforms, inputActions, lookDirection);
+        return new FighterMoveset(fighterController, acmds, generalAcmds, states, flags, inputActions, lookDirection);
     }
 }

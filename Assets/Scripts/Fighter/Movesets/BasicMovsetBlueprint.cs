@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using Unity.VisualScripting.FullSerializer;
@@ -6,19 +7,39 @@ using UnityEngine.InputSystem;
 
 public class BasicMovesetBlueprint : IMovesetBlueprint
 {
+    const float WALKING_SPEED = 0.05f;
+
+    const float HORIZONTAL_GROUND_DECELERATION = 0.5f;
+
+    const float FALL_SPEED = 0.4f;
+    const float FALL_GRAVITY_ACCELERATION = 0.8f;
+
+    const float AIR_DRIFT_SPEED = 0.1f;
+    const float AIR_DRIFT_ACCELERATION = 1.0f;
+
+    const float SHORTHOP_JUMP_SPEED = 0.5f;
+    const float SHORTHOP_DECELERATION = 22.0f;
+    const float FULLHOP_JUMP_SPEED = 0.7f;
+    const float FULLHOP_DECELERATION = 28.0f;
+
+    #region Declarations
+
     protected override HashSet<string> DefineStates() => new HashSet<string>
     {
         "WALKING_STATE",
         "STANDING_STATE",
+        "JUMPSQUATING_STATE",
         "JUMP_RISING_STATE",
-        "FALLING_STATE"
+        "FALLING_STATE",
     };
 
-    protected override Dictionary<string, double> DefineUniforms() => new Dictionary<string, double>
+    protected override Dictionary<string, bool> DefineFlags() => new Dictionary<string, bool>
     {
-        {"DOUBLE_JUMP_PERFORMED_UNIFORM", 0.0},
-        {"TRANSITION_TO_FALLING_UNIFORM", 0.0},
-        {"JUMPSQUAD_UNIFORM", 0.0}
+        {"TRANSITION_TO_JUMP_RISING_STATE_FLAG", false},
+        {"TRANSITION_TO_FALLING_STATE_FLAG", false},
+        {"PERFORMING_SHORTHOP_FLAG", false},
+        {"PERFORMING_FULLHOP_FLAG", false},
+        {"GRAVITY_ACTIVE_FLAG", true}
     };
 
     protected override List<InputAction> DefineInputActions() => new List<InputAction>
@@ -29,87 +50,153 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
 
     protected override List<GeneralAnimationCommandWrapper> DefineGeneralAcmds() => new List<GeneralAnimationCommandWrapper>
     {
-        new GeneralAnimationCommandWrapper(0, "STATE_TRANSITIONS_INPUT_GACMD", fm =>
-        {
-            if (fm.fighterController.isGrounded && fm.inputActions["Movement"].isNoAction)
-                fm.TransitionToState("STANDING_STATE");
-            if (!fm.fighterController.isGrounded && fm.fighterController.GetVelocityY() < 0.0f)
-                fm.TransitionToState("FALLING_STATE");
-        }),
-        new GeneralAnimationCommandWrapper(1, "STATE_TRANSITIONS_WALK_GACMD", fm =>
-        {
-            InputActionWrapper movementInputAction = fm.inputActions["Movement"];
-            if ((movementInputAction.isStarted || movementInputAction.isPerformed)
-            && Mathf.Abs(movementInputAction.inputAction.ReadValue<Vector2>().x) > 0.1)
-                fm.TransitionToState("WALKING_STATE");
-        }),
-        new GeneralAnimationCommandWrapper(1, "STATE_TRANSITIONS_JUMP_GACMD", fm =>
-        {
-            if (fm.inputActions["Jump"].isStarted)
-                fm.TransitionToState("JUMP_RISING_STATE");
-        }),
-        new GeneralAnimationCommandWrapper(2, "TRANSITION_CONDITIONS_GACMD", fm =>
-        {
-            switch (fm.currentState) {
-                case "WALKING_STATE":
-                    fm.TransitionToAcmd("WALKING_ACMD"); break;
-                case "STANDING_STATE":
-                    fm.TransitionToAcmd("STANDING_ACMD"); break;
-                case "JUMP_RISING_STATE":
-                    fm.TransitionToAcmd("JUMP_RISING_ACMD"); break;
-                case "FALLING_STATE":
-                    fm.TransitionToAcmd("FALLING_ACMD"); break;
-            }
-        }),
+        NewGACMD(0, "STATE_TRANSITIONS_INPUT_GACMD", STATE_TRANSITIONS_WALK_GACMD),
+        NewGACMD(1, "STATE_TRANSITIONS_JUMP_GACMD", STATE_TRANSITIONS_JUMP_AIR_GACMD),
+        NewGACMD(1000, "ACMD_TRANSITION_CONDITIONS_GACMD", ACMD_TRANSITION_CONDITIONS_GACMD),
     };
 
-    protected override Dictionary<string, AnimationCommand> DefineAcmds() => new Dictionary<string, AnimationCommand>
+    protected override Dictionary<string, ACMD> DefineAcmds() => new Dictionary<string, ACMD>
     {
+        { "WALKING_ACMD", WALKING_ACMD },
+        { "STANDING_ACMD", STANDING_ACMD },
+        { "JUMPSQUATING_ACMD", JUMPSQUATING_ACMD },
+        { "JUMP_RISING_ACMD", JUMP_RISING_ACMD },
+        { "FALLING_ACMD", FALLING_ACMD }
+    };
+
+    #endregion
+    #region GACMD
+
+    private static void STATE_TRANSITIONS_WALK_GACMD(FighterMoveset fm)
+    {
+        if (fm.fighterController.isGrounded)
         {
-            "WALKING_ACMD", fm =>
+            if (!fm.IsCurrentState("JUMPSQUATING_STATE"))
             {
-                fm.fighterController.SetHorizontalVelocity(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x * 10.0f);
-                //fm.fighterController.transform.position += new Vector3(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x, 0.0f, 0.0f) * 10.0f * Time.deltaTime;
-            }
-        },
-        {
-            "STANDING_ACMD", fm => {
-                if (fm.OnFrame(0))
+                if (!fm.inputActions["Movement"].isActive)
                 {
-                    //fm.fighterController.SetHorizontalVelocity(0);
-                    Debug.Log("0");
+                    fm.TransitionToState("STANDING_STATE");
                 }
-                if (fm.OnFrame(1))
+                else if (fm.inputActions["Movement"].isActive)
                 {
-                    Debug.Log("1");
-                }
-                if (fm.OnFrame(4))
-                {
-                    Debug.Log("4");
-                }
-                if (fm.OnFrames(5, 8))
-                {
-                    Debug.Log(fm.frameCounter);
-                }
-            }
-        },
-        {
-            "JUMP_RISING_ACMD", fm => {
-                if (fm.OnFrame(0)) {
-                    fm.SetUniformValue("JUMPSQUAD_UNIFORM", 1.0);
-                }
-                if (fm.OnFrame(3)) {
-                    fm.fighterController.SetVerticalVelocity(20f);
-                    fm.SetUniformValue("JUMPSQUAD_UNIFORM", 0.0);
-                }
-            }
-        },
-        {
-            "FALLING_ACMD", fm => {
-                if (fm.OnFrame(0)) {
-                    fm.SetUniformValue("TRANSITION_TO_FALLING_UNIFORM", 0.0);
+                    bool isMoving = Mathf.Abs(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x) > 0.1;
+                    if (isMoving)
+                    {
+                        fm.TransitionToState("WALKING_STATE");
+                    }
                 }
             }
         }
-    };
+    }
+
+    private static void STATE_TRANSITIONS_JUMP_AIR_GACMD(FighterMoveset fm)
+    {
+        if (!fm.IsCurrentState("JUMP_RISING_STATE") || fm.IsFlagTrue("TRANSITION_TO_FALLING_STATE_FLAG"))
+        {
+            if (!fm.fighterController.isGrounded)
+            {
+                fm.TransitionToState("FALLING_STATE");
+            }
+        }
+        if (fm.IsFlagTrue("TRANSITION_TO_JUMP_RISING_STATE_FLAG"))
+        {
+            fm.TransitionToState("JUMP_RISING_STATE");
+        }
+        if (fm.inputActions["Jump"].isStarted)
+        {
+            fm.TransitionToState("JUMPSQUATING_STATE");
+        }
+    }
+
+    private static void ACMD_TRANSITION_CONDITIONS_GACMD(FighterMoveset fm)
+    {
+        if (fm.IsCurrentState("WALKING_STATE"))
+        {
+            fm.TransitionToAcmd("WALKING_ACMD");
+        }
+        if (fm.IsCurrentState("STANDING_STATE"))
+        {
+            fm.TransitionToAcmd("STANDING_ACMD");
+        }
+        if (fm.IsCurrentState("FALLING_STATE"))
+        {
+            fm.SetFlag("TRANSITION_TO_FALLING_STATE_FLAG", false);
+            fm.TransitionToAcmd("FALLING_ACMD");
+        }
+        if (fm.IsCurrentState("JUMPSQUATING_STATE"))
+        {
+            fm.TransitionToAcmd("JUMPSQUATING_ACMD");
+        }
+        if (fm.IsCurrentState("JUMP_RISING_STATE"))
+        {
+            fm.SetFlag("TRANSITION_TO_JUMP_RISING_STATE_FLAG", false);
+            fm.TransitionToAcmd("JUMP_RISING_ACMD");
+        }
+    }
+
+    #endregion
+    #region ACMD
+
+    private void WALKING_ACMD(FighterMoveset fm)
+    {
+        float joystickMultiplier = fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x;
+        fm.fighterController.SetHorizontalVelocity(joystickMultiplier * WALKING_SPEED);
+        //fm.fighterController.ApproachHorizontalVelocity(AIR_DRIFT_ACCELERATION, joystickMultiplier * WALKING_SPEED);
+
+        //fm.fighterController.transform.position += new Vector3(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x, 0.0f, 0.0f) * 10.0f * Time.deltaTime;
+    }
+
+    private void STANDING_ACMD(FighterMoveset fm)
+    {
+        fm.fighterController.ApproachHorizontalVelocity(HORIZONTAL_GROUND_DECELERATION, 0.0f);
+    }
+
+    private void JUMPSQUATING_ACMD(FighterMoveset fm)
+    {
+        if (fm.OnFrame(3))
+        {
+            fm.SetFlag("TRANSITION_TO_JUMP_RISING_STATE_FLAG", true);
+        }
+    }
+
+    private static void JUMP_RISING_ACMD(FighterMoveset fm)
+    {
+        float joystickMultiplier = fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x;
+        fm.fighterController.ApproachHorizontalVelocity(AIR_DRIFT_ACCELERATION, AIR_DRIFT_SPEED * joystickMultiplier);
+
+        if (fm.OnFrame(0))
+        {
+            if (fm.inputActions["Jump"].isPerformed)
+            {
+                fm.fighterController.SetVerticalVelocity(FULLHOP_JUMP_SPEED);
+                fm.SetFlag("PERFORMING_FULLHOP_FLAG", true);
+            }
+            else
+            {
+                fm.fighterController.SetVerticalVelocity(SHORTHOP_JUMP_SPEED);
+                fm.SetFlag("PERFORMING_SHORTHOP_FLAG", true);
+
+            }
+        }
+
+        if (fm.OnFrame(6))
+        {
+            if (fm.IsFlagTrue("PERFORMING_FULLHOP_FLAG"))
+                fm.fighterController.ApproachVertivalVelocity(FULLHOP_DECELERATION, 0.0f);
+            else if (fm.IsFlagTrue("PERFORMING_SHORTHOP_FLAG"))
+                fm.fighterController.ApproachVertivalVelocity(SHORTHOP_DECELERATION, 0.0f);
+            fm.SetFlag("PERFORMING_FULLHOP_FLAG", false);
+            fm.SetFlag("PERFORMING_SHORTHOP_FLAG", false);
+            fm.SetFlag("TRANSITION_TO_FALLING_STATE_FLAG", true);
+        }
+    }
+
+    private static void FALLING_ACMD(FighterMoveset fm)
+    {
+        float joystickMultiplier = fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x;
+        fm.fighterController.ApproachVertivalVelocity(FALL_GRAVITY_ACCELERATION, -FALL_SPEED);
+        fm.fighterController.ApproachHorizontalVelocity(AIR_DRIFT_ACCELERATION, AIR_DRIFT_SPEED * joystickMultiplier);
+    }
+
+    #endregion
 }

@@ -497,7 +497,7 @@ MonoBehaviour:
     m_IgnoreScrollWheelUntilClicked: 0
     m_EnableMouseInput: 1
     m_EnableSliderZoom: 0
-    m_UniformScale: 1
+    m_FlagScale: 1
     m_UpDirection: 1
     m_DrawArea:
       serializedVersion: 2

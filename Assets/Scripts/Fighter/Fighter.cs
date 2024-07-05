@@ -15,6 +15,9 @@ public class Fighter : MonoBehaviour
     [SerializeField] public FighterMoveset fighterMoveset;
     [field: SerializeField] public CharacterType characterType { get; private set; }
 
+    [SerializeField] private bool frameByFrame = false;
+    [SerializeField] private bool continueFrame = false;
+
     void Start()
     {
         InputManager inputManager = FindAnyObjectByType<InputManager>();
@@ -32,7 +35,12 @@ public class Fighter : MonoBehaviour
             fighterMoveset = MovesetRegistry.GetMoveset("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterController>());
             UpdateDeviceIds(inputManager);
         }
-        fighterMoveset.UpdateTick();
+        if (!frameByFrame || continueFrame)
+        {
+            fighterMoveset.UpdateTick();
+            continueFrame = false;
+        }
+
     }
 
     void OnDisable()

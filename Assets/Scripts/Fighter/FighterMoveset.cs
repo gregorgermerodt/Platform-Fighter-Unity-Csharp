@@ -13,64 +13,65 @@ public class FighterMoveset
     public FighterController fighterController;
 
     public HashSet<string> states { get; private set; }
-    public Dictionary<string, double> uniforms { get; private set; }
+    public Dictionary<string, bool> flags { get; private set; }
     public Dictionary<string, InputActionWrapper> inputActions { get; private set; }
     public List<GeneralAnimationCommandWrapper> generalAcmds { get; private set; }
-    public Dictionary<string, AnimationCommand> acmds { get; private set; }
+    public Dictionary<string, ACMD> acmds { get; private set; }
 
     public LookDirection lookDirection { get; private set; }
 
-    private AnimationCommand currentAcmd;
+    private ACMD currentAcmd;
     public string currentAcmdName { get; private set; }
     public string currentState { get; private set; }
 
     public int frameCounter { get; private set; } = 0;
     public int targetFrame { get; private set; } = 0;
 
-    public FighterMoveset(FighterController fighterController, Dictionary<string, AnimationCommand> acmds,
+    public FighterMoveset(FighterController fighterController, Dictionary<string, ACMD> acmds,
         List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states,
-        Dictionary<string, double> uniforms, Dictionary<string, InputActionWrapper> inputActions, LookDirection lookDirection)
+        Dictionary<string, bool> flags, Dictionary<string, InputActionWrapper> inputActions, LookDirection lookDirection)
     {
         this.fighterController = fighterController;
 
         this.acmds = acmds;
         this.states = states;
-        this.uniforms = uniforms;
+        this.flags = flags;
         this.inputActions = inputActions;
         this.generalAcmds = generalAcmds;
 
         this.lookDirection = lookDirection;
 
+        this.currentAcmdName = "STANDING_ACMD";
         this.currentAcmd = acmds["STANDING_ACMD"];
-        this.currentState = "STANDING";
+        this.currentState = "STANDING_STATE";
 
-        AddDebugAcmd();
+        //AddDebugAcmd();
     }
 
-    private void AddDebugAcmd()
-    {
-        if (!acmds.ContainsKey("print_error_move"))
-
-            if (!acmds.ContainsKey("error_acmd"))
-                acmds.Add("error_acmd", fm => { });
-
-        if (!states.Contains("error_state"))
-            states.Add("error_state");
-    }
+    //private void AddDebugAcmd()
+    //{
+    //    if (!acmds.ContainsKey("print_error_move"))
+    //
+    //        if (!acmds.ContainsKey("error_acmd"))
+    //            acmds.Add("error_acmd", fm => { });
+    //
+    //    if (!states.Contains("error_state"))
+    //        states.Add("error_state");
+    //}
 
     public void UpdateTick()
     {
         targetFrame = 0;
+        fighterController.UpdateTick();
+
         foreach (var gacmd in generalAcmds)
         {
             gacmd.acmd(this);
         }
         if (frameCounter == 0)
             Debug.Log("Running ACMD: \"" + currentAcmdName + "\", Current State: " + currentState);
-
+            
         currentAcmd(this);
-
-        fighterController.UpdateTick();
 
         foreach (var pair in inputActions)
         {
@@ -115,69 +116,59 @@ public class FighterMoveset
         //Debug.Log("Transitioned to ACMD: " + currentAcmdName);
     }
 
+    public bool IsCurrentState(string stateName)
+    {
+        if (!states.Contains(stateName))
+        {
+            Debug.LogWarning("IsCurrentState(): State with name \"" + stateName + "\" not found. \n");
+            return false;
+        }
+        return currentState == stateName;
+    }
+
     public void TransitionToState(string stateName)
     {
-        if (currentState == stateName)
+        if (!states.Contains(stateName))
         {
+            Debug.LogWarning("TransitionToState(): State with name \"" + stateName + "\" not found. \n");
             return;
         }
-        if (states.Contains(stateName))
+        if (currentState != stateName)
         {
             currentState = stateName;
         }
-        else
-        {
-            Debug.LogWarning("TransitionToState(): State with name \"" + stateName + "\" not found. \n");
-        }
+
         //Debug.Log("Transitioned to State: " + currentState);
     }
 
-    public void SetUniformValue(string uniformName, double value)
+    public void SetFlag(string flagName, bool value)
     {
-        if (uniforms.ContainsKey(uniformName))
+        if (!flags.ContainsKey(flagName))
         {
-            uniforms[uniformName] = value;
+            Debug.LogWarning("SetFlagValue(): Flag with name \"" + flagName + "\" not found. \n");
+            return;
         }
-        else
+        if (flags[flagName] != value)
         {
-            Debug.LogWarning("SetUniformValue(): Uniform with name \"" + uniformName + "\" not found. \n");
+            flags[flagName] = value;
+            Debug.Log("Set Flag " + flagName + " to value " + value);
         }
-        Debug.Log("Set Uniform " + uniformName + " to value " + value);
     }
 
-    public bool IsUniformSet(string uniformName)
+    public bool IsFlagTrue(string flagName)
     {
-        if (uniforms.ContainsKey(uniformName))
+        if (!flags.ContainsKey(flagName))
         {
-            return uniforms[uniformName] != 0.0;
+            Debug.LogWarning("IsFlagSet(): Flag with name \"" + flagName + "\" not found. \n");
+            return false;
         }
-        else
-        {
-            Debug.LogWarning("IsUniformSet(): Uniform with name \"" + uniformName + "\" not found. \n");
-        }
-        return false;
+        return flags[flagName];
     }
 
-    public double GetUniformValue(string uniformName)
-    {
-        if (uniforms.ContainsKey(uniformName))
-        {
-            return uniforms[uniformName];
-        }
-        else
-        {
-            Debug.LogWarning("GetUniformValue(): Uniform with name \"" + uniformName + "\" not found. \n");
-        }
-        return 0;
-    }
+    public bool IsFlagFalse(string flagName) => !IsFlagTrue(flagName);
 
-    public bool OnFrame(int frame)
-    {
-        return frame == frameCounter;
-    }
+    public bool OnFrame(int frame) => frame == frameCounter;
 
-    public bool OnFrames(int firstFrame, int lastIncludedFrame)
-    {
-        return frameCounter >= firstFrame && frameCounter <= lastIncludedFrame;
-    }
+    public bool OnFrames(int firstFrame, int lastIncludedFrame) => frameCounter >= firstFrame && frameCounter <= lastIncludedFrame;
+
 }

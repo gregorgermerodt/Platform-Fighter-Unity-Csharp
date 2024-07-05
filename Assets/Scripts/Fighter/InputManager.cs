@@ -94,13 +94,13 @@ public class InputManager : MonoBehaviour
 
     private void OnAnyKeyPerformed(InputAction.CallbackContext context)
     {
-        Debug.Log("Button (" + context.control.name + ") pressed by Device: " + context.control.device.name +
-            " (Id: " + context.control.device.deviceId + ").");
+        //Debug.Log("Button (" + context.control.name + ") pressed by Device: " + context.control.device.name +
+        //    " (Id: " + context.control.device.deviceId + ").");
 
         if (Time.time - lastConnect < delayBetweenConnects)
         {
-            Debug.LogWarning("Device: " + context.control.device.name + " (Id: " + context.control.device.deviceId +
-                ") is trying get assigned before the set delay!");
+            //Debug.LogWarning("Device: " + context.control.device.name + " (Id: " + context.control.device.deviceId +
+            //    ") is trying get assigned before the set delay!");
         }
         if (!playerControllerDeviceIds.Contains(context.control.device.deviceId))
             for (int i = 0; i < playerControllerDeviceIds.Count; i++)
