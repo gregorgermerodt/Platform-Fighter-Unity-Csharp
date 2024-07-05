@@ -31,14 +31,16 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
     {
         new GeneralAnimationCommandWrapper(0, "STATE_TRANSITIONS_INPUT_GACMD", fm =>
         {
-            if (fm.fighterPhysics.isGrounded && fm.inputActions["Movement"].isNoAction) 
+            if (fm.fighterController.isGrounded && fm.inputActions["Movement"].isNoAction)
                 fm.TransitionToState("STANDING_STATE");
-            if (!fm.fighterPhysics.isGrounded && fm.fighterPhysics.velocity.y < 0.0f)
+            if (!fm.fighterController.isGrounded && fm.fighterController.GetVelocityY() < 0.0f)
                 fm.TransitionToState("FALLING_STATE");
         }),
         new GeneralAnimationCommandWrapper(1, "STATE_TRANSITIONS_WALK_GACMD", fm =>
         {
-            if (fm.inputActions["Movement"].isStarted || fm.inputActions["Movement"].isPerformed)
+            InputActionWrapper movementInputAction = fm.inputActions["Movement"];
+            if ((movementInputAction.isStarted || movementInputAction.isPerformed)
+            && Mathf.Abs(movementInputAction.inputAction.ReadValue<Vector2>().x) > 0.1)
                 fm.TransitionToState("WALKING_STATE");
         }),
         new GeneralAnimationCommandWrapper(1, "STATE_TRANSITIONS_JUMP_GACMD", fm =>
@@ -66,35 +68,45 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
         {
             "WALKING_ACMD", fm =>
             {
-                fm.fighterPhysics.SetHorizontalVelocity(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x * 10.0f);
-                //fm.fighterPhysics.transform.position += new Vector3(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x, 0.0f, 0.0f) * 10.0f * Time.deltaTime;
+                fm.fighterController.SetHorizontalVelocity(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x * 10.0f);
+                //fm.fighterController.transform.position += new Vector3(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x, 0.0f, 0.0f) * 10.0f * Time.deltaTime;
             }
         },
         {
             "STANDING_ACMD", fm => {
-                fm.OnFrame(0);
-                if (fm.CanExecute()) {
-                    fm.fighterPhysics.SetHorizontalVelocity(0);
+                if (fm.OnFrame(0))
+                {
+                    //fm.fighterController.SetHorizontalVelocity(0);
+                    Debug.Log("0");
                 }
+                if (fm.OnFrame(1))
+                {
+                    Debug.Log("1");
                 }
+                if (fm.OnFrame(4))
+                {
+                    Debug.Log("4");
+                }
+                if (fm.OnFrames(5, 8))
+                {
+                    Debug.Log(fm.frameCounter);
+                }
+            }
         },
         {
             "JUMP_RISING_ACMD", fm => {
-                fm.OnFrame(0);
-                if (fm.CanExecute()) {
+                if (fm.OnFrame(0)) {
                     fm.SetUniformValue("JUMPSQUAD_UNIFORM", 1.0);
                 }
-                fm.OnFrame(3);
-                if (fm.CanExecute()) {
-                    fm.fighterPhysics.SetVerticalVelocity(20f);
+                if (fm.OnFrame(3)) {
+                    fm.fighterController.SetVerticalVelocity(20f);
                     fm.SetUniformValue("JUMPSQUAD_UNIFORM", 0.0);
                 }
             }
         },
         {
             "FALLING_ACMD", fm => {
-                fm.OnFrame(0);
-                if (fm.CanExecute()) {
+                if (fm.OnFrame(0)) {
                     fm.SetUniformValue("TRANSITION_TO_FALLING_UNIFORM", 0.0);
                 }
             }

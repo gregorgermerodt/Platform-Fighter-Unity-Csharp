@@ -178,12 +178,12 @@ public class MovesetBuilder
         return this;
     }
 
-    public FighterMoveset BuildFighterMoveset(FighterPhysics fighterPhysics)
+    public FighterMoveset BuildFighterMoveset(FighterController fighterController)
     {
-        if (fighterPhysics == null)
-            throw new ArgumentNullException(nameof(fighterPhysics), "fighterTransform darf nicht null sein.");
+        if (fighterController == null)
+            throw new ArgumentNullException(nameof(fighterController), "fighterTransform darf nicht null sein.");
 
         generalAcmds.Sort((gacmd1, gacmd2) => gacmd1.priority.CompareTo(gacmd2.priority));
-        return new FighterMoveset(fighterPhysics, acmds, generalAcmds, states, uniforms, inputActions, lookDirection);
+        return new FighterMoveset(fighterController, acmds, generalAcmds, states, uniforms, inputActions, lookDirection);
     }
 }

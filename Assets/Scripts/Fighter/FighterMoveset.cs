@@ -10,7 +10,7 @@ public class FighterMoveset
         LEFT
     }
 
-    public FighterPhysics fighterPhysics;
+    public FighterController fighterController;
 
     public HashSet<string> states { get; private set; }
     public Dictionary<string, double> uniforms { get; private set; }
@@ -26,15 +26,12 @@ public class FighterMoveset
 
     public int frameCounter { get; private set; } = 0;
     public int targetFrame { get; private set; } = 0;
-    public bool isTargetFrameSet { get; private set; }
-    public bool isFrameExecuted { get; private set; }
 
-
-    public FighterMoveset(FighterPhysics fighterPhysics, Dictionary<string, AnimationCommand> acmds,
+    public FighterMoveset(FighterController fighterController, Dictionary<string, AnimationCommand> acmds,
         List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states,
         Dictionary<string, double> uniforms, Dictionary<string, InputActionWrapper> inputActions, LookDirection lookDirection)
     {
-        this.fighterPhysics = fighterPhysics;
+        this.fighterController = fighterController;
 
         this.acmds = acmds;
         this.states = states;
@@ -63,9 +60,6 @@ public class FighterMoveset
 
     public void UpdateTick()
     {
-        isTargetFrameSet = false;
-        isFrameExecuted = false;
-
         targetFrame = 0;
         foreach (var gacmd in generalAcmds)
         {
@@ -76,7 +70,7 @@ public class FighterMoveset
 
         currentAcmd(this);
 
-        fighterPhysics.UpdateTick();
+        fighterController.UpdateTick();
 
         foreach (var pair in inputActions)
         {
@@ -177,36 +171,13 @@ public class FighterMoveset
         return 0;
     }
 
-    public void OnFrame(int frame)
+    public bool OnFrame(int frame)
     {
-        if (isTargetFrameSet)
-            return;
-
-        if (frameCounter <= frame)
-        {
-            targetFrame = frame;
-            isTargetFrameSet = true;
-        }
+        return frame == frameCounter;
     }
 
-    public void LoopForFrames(int firstFrame, int lastIncludedFrame)
+    public bool OnFrames(int firstFrame, int lastIncludedFrame)
     {
-        if (isTargetFrameSet)
-            return;
-
-        if (frameCounter >= firstFrame && frameCounter <= lastIncludedFrame)
-        {
-            isTargetFrameSet = true;
-            targetFrame = frameCounter;
-        }
-    }
-
-    public bool CanExecute()
-    {
-        if (isFrameExecuted)
-            return false;
-
-        isFrameExecuted = frameCounter == targetFrame;
-        return isFrameExecuted;
+        return frameCounter >= firstFrame && frameCounter <= lastIncludedFrame;
     }
 }
