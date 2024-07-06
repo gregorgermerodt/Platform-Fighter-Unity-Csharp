@@ -42,6 +42,12 @@ public class InputManager : MonoBehaviour
         anyKeyAction.started += OnAnyKeyPerformed;
     }
 
+    void OnValidate()
+    {
+        if (UpdateDeviceIdsEvent != null)
+            UpdateDeviceIdsEvent.Invoke(this);
+    }
+
     void Update()
     {
         if (allowControllerAssigns && !anyKeyAction.enabled)

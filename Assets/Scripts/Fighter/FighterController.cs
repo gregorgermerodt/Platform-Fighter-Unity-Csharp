@@ -1,11 +1,12 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.UIElements;
+using System.Data.Common;
 
 [RequireComponent(typeof(Rigidbody), typeof(BoxCollider))]
 public class FighterController : MonoBehaviour
 {
-    [SerializeField] private float DOWN_CHECK_DISTANCE = 0.2f;
+    [SerializeField] private float CHECK_DISTANCE = 0.2f;
     [SerializeField] private float FIGHTER_WIDTH = 1.0f;
     [SerializeField] private float MAX_SLOPE_ANGLE_DEGREE = 45;
 
@@ -21,6 +22,8 @@ public class FighterController : MonoBehaviour
     [field: SerializeField] public bool isGrounded { get; private set; } = false;
     [field: SerializeField] public bool wasGrounded { get; private set; } = false;
 
+    private Vector3 previousPosition;
+
     [field: SerializeField] public bool isInHitStun { get; private set; } = false;
 
 
@@ -35,10 +38,10 @@ public class FighterController : MonoBehaviour
         platformLayerMasks = 1 << LayerMask.NameToLayer("Platform");
 
         collider = GetComponent<BoxCollider>();
-        collider.center = Vector3.up * DOWN_CHECK_DISTANCE;
+        collider.center = Vector3.up * CHECK_DISTANCE;
         collider.size = new Vector3(
             FIGHTER_WIDTH,
-            DOWN_CHECK_DISTANCE,
+            CHECK_DISTANCE,
             FIGHTER_WIDTH
         );
         collider.includeLayers = groundLayerMasks | platformLayerMasks;
@@ -60,9 +63,13 @@ public class FighterController : MonoBehaviour
     {
         wasGrounded = isGrounded;
         isGrounded = false;
+        previousPosition = transform.position;
 
-        if (currentVelocity.y <= 0.0f)
-            HandleGround();
+        HandleGround();
+        //else if (currentVelocity.y > 0.0f)
+        //HandleCeiling();
+        //if (currentVelocity.magnitude != 0.0f)
+        //HandleWalls();
 
         transform.Translate(currentVelocity, Space.World);
 
@@ -70,39 +77,82 @@ public class FighterController : MonoBehaviour
         {
             transform.position = new Vector3(0.0f, 25.0f, 0.0f);
         }
+        transform.position = new Vector3(transform.position.x, transform.position.y, 0.0f);
     }
 
     private void HandleGround()
     {
-        Vector3 origin = transform.position + new Vector3(currentVelocity.x, DOWN_CHECK_DISTANCE, 0.0f);
-        Vector3 dir = currentVelocity.y != 0 ? currentVelocity.normalized : new Vector3(currentVelocity.x, -DOWN_CHECK_DISTANCE, 0.0f).normalized;
-        float rayLength = DOWN_CHECK_DISTANCE * 2 + currentVelocity.magnitude;
+        if (currentVelocity.y > 0.0f)
+            return;
+
         RaycastHit hitInfo;
-        bool hit = Physics.Raycast(
+        Vector3 origin;
+        Vector3 rayDirection;
+        float rayLength;
+
+        if (wasGrounded)
+        {
+            origin = previousPosition + Vector3.right * currentVelocity.x + Vector3.up * CHECK_DISTANCE;
+            rayDirection = -Vector3.up;
+            rayLength = CHECK_DISTANCE * 2;
+            if (CheckGroundCommon(origin, rayDirection, rayLength, out hitInfo))
+            {
+                transform.position = hitInfo.point;
+                currentVelocity.y = 0.0f;
+                floorCollider = hitInfo.collider;
+                isGrounded = true;
+                return;
+            }
+        }
+
+        //origin = previousPosition - (currentVelocity.normalized * CHECK_DISTANCE);
+        origin = previousPosition;
+        rayDirection = currentVelocity.normalized;
+        rayLength = CHECK_DISTANCE + currentVelocity.magnitude;
+
+        if (CheckGroundCommon(origin, rayDirection, rayLength, out hitInfo))
+        {
+
+            if (hitInfo.distance > CHECK_DISTANCE)
+            {
+                currentVelocity = rayDirection * hitInfo.distance * 0.75f;
+                //transform.position = hitInfo.point - rayDirection * hitInfo.distance;
+            }
+            else
+            {
+                transform.position = hitInfo.point;
+                currentVelocity.y = 0.0f;
+                floorCollider = hitInfo.collider;
+                isGrounded = true;
+            }
+        }
+
+
+    }
+
+
+    private bool CheckGroundCommon(Vector3 origin, Vector3 rayDirection, float rayLength, out RaycastHit hitInfo)
+    {
+        bool hit;
+
+        hit = Physics.Raycast(
             origin,
-            dir,
+            rayDirection,
             out hitInfo,
             rayLength,
             groundLayerMasks | platformLayerMasks
         );
+
         if (hit)
         {
             if (Vector3.Dot(-Vector3.up, hitInfo.normal) < 0)
             {
-                if (hitInfo.distance > DOWN_CHECK_DISTANCE * 2)
-                {
-                    transform.Translate((hitInfo.point - transform.position) * 0.5f, Space.World);
-                    currentVelocity.y = -DOWN_CHECK_DISTANCE;
-                }
-                else
-                {
-                    transform.position = hitInfo.point;
-                    currentVelocity.y = 0.0f;
-                }
-                isGrounded = true;
+                return true; // Änderung hier, um den Status zurückzugeben
             }
         }
+        return false; // Änderung hier, um den Status zurückzugeben
     }
+
 
     public void OnCollisionEnter(Collision other)
     {
@@ -163,9 +213,26 @@ public class FighterController : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        Vector3 origin = transform.position + new Vector3(currentVelocity.x, DOWN_CHECK_DISTANCE, 0.0f);
-        Vector3 dir = currentVelocity.normalized;
-        float rayLength = DOWN_CHECK_DISTANCE * 2 + currentVelocity.y;
-        Gizmos.DrawRay(origin, dir * rayLength);
+        Vector3 origin;
+        Vector3 rayDirection;
+        float rayLength;
+
+        if (currentVelocity.y < 0.0f)
+        {
+            if (wasGrounded)
+            {
+                origin = previousPosition + Vector3.right * currentVelocity.x + Vector3.up * CHECK_DISTANCE;
+                rayDirection = -Vector3.up;
+                rayLength = CHECK_DISTANCE * 2;
+            }
+            else
+            {
+                origin = previousPosition;
+                rayDirection = currentVelocity.normalized;
+                rayLength = CHECK_DISTANCE + currentVelocity.magnitude;
+            }
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawRay(origin, rayDirection * rayLength);
+        }
     }
 }

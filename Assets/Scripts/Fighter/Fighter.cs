@@ -26,6 +26,19 @@ public class Fighter : MonoBehaviour
         UpdateDeviceIds(inputManager);
     }
 
+    void OnValidate()
+    {
+        InputManager inputManager = FindAnyObjectByType<InputManager>();
+        try
+        {
+            UpdateDeviceIds(inputManager);
+        }
+        catch (System.Exception)
+        {
+            //Debug.LogWarning("Couldn't update controller for Player " + (playerNumber + 1));
+        }
+    }
+
     void FixedUpdate()
     {
         if (fighterMoveset == null)
@@ -40,7 +53,6 @@ public class Fighter : MonoBehaviour
             fighterMoveset.UpdateTick();
             continueFrame = false;
         }
-
     }
 
     void OnDisable()

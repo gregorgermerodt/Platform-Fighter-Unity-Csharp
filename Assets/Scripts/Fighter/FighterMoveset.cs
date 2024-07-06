@@ -27,6 +27,8 @@ public class FighterMoveset
     public int frameCounter { get; private set; } = 0;
     public int targetFrame { get; private set; } = 0;
 
+    [SerializeField] public int airJumpsPerformed = 0;
+
     public FighterMoveset(FighterController fighterController, Dictionary<string, ACMD> acmds,
         List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states,
         Dictionary<string, bool> flags, Dictionary<string, InputActionWrapper> inputActions, LookDirection lookDirection)
@@ -70,7 +72,7 @@ public class FighterMoveset
         }
         if (frameCounter == 0)
             Debug.Log("Running ACMD: \"" + currentAcmdName + "\", Current State: " + currentState);
-            
+
         currentAcmd(this);
 
         foreach (var pair in inputActions)
