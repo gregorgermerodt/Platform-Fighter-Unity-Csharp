@@ -187,7 +187,7 @@ public class FighterController : MonoBehaviour
             currentVelocity = new Vector3(newVelocityX, currentVelocity.y, currentVelocity.z);
     }
 
-    public void ApproachVertivalVelocity(float acceleration, float targetVelocityY, bool capToTargetVelocity = true)
+    public void ApproachVerticalVelocity(float acceleration, float targetVelocityY, bool capToTargetVelocity = true)
     {
         acceleration = Mathf.Abs(acceleration);
 

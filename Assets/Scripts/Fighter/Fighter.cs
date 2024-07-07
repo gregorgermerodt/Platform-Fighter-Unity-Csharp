@@ -22,7 +22,7 @@ public class Fighter : MonoBehaviour
     {
         InputManager inputManager = FindAnyObjectByType<InputManager>();
         inputManager.UpdateDeviceIdsEvent += UpdateDeviceIds;
-        fighterMoveset = MovesetRegistry.GetMoveset("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterController>());
+        fighterMoveset = MovesetRegistry.GetBuilder("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterController>());
         UpdateDeviceIds(inputManager);
     }
 
@@ -45,7 +45,7 @@ public class Fighter : MonoBehaviour
         {
             InputManager inputManager = FindAnyObjectByType<InputManager>();
             inputManager.UpdateDeviceIdsEvent += UpdateDeviceIds;
-            fighterMoveset = MovesetRegistry.GetMoveset("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterController>());
+            fighterMoveset = MovesetRegistry.GetBuilder("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterController>());
             UpdateDeviceIds(inputManager);
         }
         if (!frameByFrame || continueFrame)

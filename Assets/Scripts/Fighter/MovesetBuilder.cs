@@ -189,7 +189,7 @@ public class MovesetBuilder
     public FighterMoveset BuildFighterMoveset(FighterController fighterController)
     {
         if (fighterController == null)
-            throw new ArgumentNullException(nameof(fighterController), "fighterTransform darf nicht null sein.");
+            throw new ArgumentNullException(nameof(fighterController), "fighterController darf nicht null sein.");
 
         generalAcmds.Sort((gacmd1, gacmd2) => gacmd1.priority.CompareTo(gacmd2.priority));
         return new FighterMoveset(fighterController, acmds, generalAcmds, states, flags, inputActions, lookDirection);

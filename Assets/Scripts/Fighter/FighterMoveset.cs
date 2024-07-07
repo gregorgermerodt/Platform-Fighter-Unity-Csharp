@@ -27,7 +27,7 @@ public class FighterMoveset
     public int frameCounter { get; private set; } = 0;
     public int targetFrame { get; private set; } = 0;
 
-    [SerializeField] public int airJumpsPerformed = 0;
+    [SerializeField] public int airJumpsCount = 0;
 
     public FighterMoveset(FighterController fighterController, Dictionary<string, ACMD> acmds,
         List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states,

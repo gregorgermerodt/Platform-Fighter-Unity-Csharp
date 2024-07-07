@@ -17,10 +17,14 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
     const float AIR_DRIFT_SPEED = 0.2f;
     const float AIR_DRIFT_ACCELERATION = 1.0f;
 
-    const float SHORTHOP_JUMP_SPEED = 0.5f;
-    const float SHORTHOP_DECELERATION = 22.0f;
-    const float FULLHOP_JUMP_SPEED = 0.7f;
-    const float FULLHOP_DECELERATION = 28.0f;
+    const float SHORTJUMP_JUMP_SPEED = 0.5f;
+    const float SHORTJUMP_AIR_DECELERATION = 22.0f;
+    const float FULLJUMP_JUMP_SPEED = 0.7f;
+    const float FULLJUMP_AIR_DECELERATION = 28.0f;
+    const float AIRJUMP_JUMP_SPEED = 0.8f;
+    const float AIRJUMP_AIR_DECELERATION = 28.0f;
+
+    const int MAX_AIR_JUMP_COUNT = 1;
 
     #region Declarations
 
@@ -30,6 +34,7 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
         "STANDING_STATE",
         "JUMPSQUATING_STATE",
         "JUMP_RISING_STATE",
+        "AIR_JUMP_RISING_STATE",
         "FALLING_STATE",
     };
 
@@ -37,9 +42,11 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
     {
         {"TRANSITION_TO_JUMP_RISING_STATE_FLAG", false},
         {"NO_TRANSITION_TO_FALLING_STATE_FLAG", false},
-        {"PERFORMING_SHORTHOP_FLAG", false},
-        {"PERFORMING_FULLHOP_FLAG", false},
+        {"PERFORMING_SHORTJUMP_FLAG", false},
+        {"PERFORMING_FULLJUMP_FLAG", false},
         {"GROUND_JUMP_PERFORMED_FLAG", false},
+        {"LAST_AIR_JUMP_PERFORMED", false},
+        {"NO_TRANSITION_TO_AIR_JUMP_STATE_FLAG", false},
         {"GRAVITY_ACTIVE_FLAG", true},
     };
 
@@ -63,6 +70,7 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
         { "STANDING_ACMD", STANDING_ACMD },
         { "JUMPSQUATING_ACMD", JUMPSQUATING_ACMD },
         { "JUMP_RISING_ACMD", JUMP_RISING_ACMD },
+        {"AIR_JUMP_RISING_ACMD", AIR_JUMP_RISING_ACMD},
         { "FALLING_ACMD", FALLING_ACMD },
     };
 
@@ -71,24 +79,25 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
 
     private static void STATE_TRANSITIONS_WALK_GACMD(FighterMoveset fm)
     {
-        if (fm.fighterController.isGrounded)
+        if (!fm.fighterController.isGrounded)
+            return;
+
+        if (!fm.IsCurrentState("JUMPSQUATING_STATE"))
         {
-            if (!fm.IsCurrentState("JUMPSQUATING_STATE"))
+            if (fm.inputActions["Movement"].isActive)
             {
-                if (!fm.inputActions["Movement"].isActive)
+                bool isEnoughMovement = Mathf.Abs(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x) > 0.1;
+                if (isEnoughMovement)
                 {
-                    fm.TransitionToState("STANDING_STATE");
-                }
-                else if (fm.inputActions["Movement"].isActive)
-                {
-                    bool isMoving = Mathf.Abs(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x) > 0.1;
-                    if (isMoving)
-                    {
-                        fm.TransitionToState("WALKING_STATE");
-                    }
+                    fm.TransitionToState("WALKING_STATE");
                 }
             }
+            else
+            {
+                fm.TransitionToState("STANDING_STATE");
+            }
         }
+
     }
 
     private static void STATE_TRANSITIONS_JUMP_AIR_GACMD(FighterMoveset fm)
@@ -96,30 +105,37 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
         if (fm.fighterController.isGrounded)
         {
             fm.SetFlag("GROUND_JUMP_PERFORMED_FLAG", false);
+            fm.SetFlag("LAST_AIR_JUMP_PERFORMED", false);
+            fm.airJumpsCount = 0;
+
+            if (fm.inputActions["Jump"].isStarted)
+                fm.TransitionToState("JUMPSQUATING_STATE");
         }
-        if (fm.IsFlagFalse("NO_TRANSITION_TO_FALLING_STATE_FLAG"))
+        else // if (!fm.fighterController.isGrounded)
         {
-            if (!fm.fighterController.isGrounded)
+            if (fm.inputActions["Jump"].isStarted
+                && fm.IsFlagFalse("NO_TRANSITION_TO_AIR_JUMP_STATE_FLAG")
+                && fm.airJumpsCount < MAX_AIR_JUMP_COUNT)
             {
-                fm.TransitionToState("FALLING_STATE");
+                fm.TransitionToState("AIR_JUMP_RISING_STATE");
             }
+            else if (fm.IsFlagFalse("NO_TRANSITION_TO_FALLING_STATE_FLAG"))
+                fm.TransitionToState("FALLING_STATE");
         }
+
         if (fm.IsFlagTrue("TRANSITION_TO_JUMP_RISING_STATE_FLAG"))
         {
             fm.TransitionToState("JUMP_RISING_STATE");
         }
-        if (fm.fighterController.isGrounded && fm.inputActions["Jump"].isStarted)
-        {
-            fm.TransitionToState("JUMPSQUATING_STATE");
-        }
+
+
     }
 
     private void GRAVITY_GACMD(FighterMoveset fm)
     {
         if (fm.IsFlagTrue("GRAVITY_ACTIVE_FLAG") && !fm.fighterController.isGrounded)
         {
-            float joystickMultiplier = fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x;
-            fm.fighterController.ApproachVertivalVelocity(FALL_GRAVITY_ACCELERATION, -FALL_SPEED);
+            fm.fighterController.ApproachVerticalVelocity(FALL_GRAVITY_ACCELERATION, -FALL_SPEED);
         }
     }
 
@@ -147,6 +163,10 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
             fm.SetFlag("TRANSITION_TO_JUMP_RISING_STATE_FLAG", false);
             fm.TransitionToAcmd("JUMP_RISING_ACMD");
         }
+        if (fm.IsCurrentState("AIR_JUMP_RISING_STATE"))
+        {
+            fm.TransitionToAcmd("AIR_JUMP_RISING_ACMD");
+        }
     }
 
     #endregion
@@ -156,9 +176,6 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
     {
         float joystickMultiplier = fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x;
         fm.fighterController.SetHorizontalVelocity(joystickMultiplier * WALKING_SPEED);
-        //fm.fighterController.ApproachHorizontalVelocity(AIR_DRIFT_ACCELERATION, joystickMultiplier * WALKING_SPEED);
-
-        //fm.fighterController.transform.position += new Vector3(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x, 0.0f, 0.0f) * 10.0f * Time.deltaTime;
     }
 
     private void STANDING_ACMD(FighterMoveset fm)
@@ -189,25 +206,51 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
             fm.SetFlag("GROUND_JUMP_PERFORMED_FLAG", true);
             if (fm.inputActions["Jump"].isPerformed)
             {
-                fm.fighterController.SetVerticalVelocity(FULLHOP_JUMP_SPEED);
-                fm.SetFlag("PERFORMING_FULLHOP_FLAG", true);
+                fm.fighterController.SetVerticalVelocity(FULLJUMP_JUMP_SPEED);
+                fm.SetFlag("PERFORMING_FULLJUMP_FLAG", true);
             }
             else
             {
-                fm.fighterController.SetVerticalVelocity(SHORTHOP_JUMP_SPEED);
-                fm.SetFlag("PERFORMING_SHORTHOP_FLAG", true);
-
+                fm.fighterController.SetVerticalVelocity(SHORTJUMP_JUMP_SPEED);
+                fm.SetFlag("PERFORMING_SHORTJUMP_FLAG", true);
             }
         }
 
         if (fm.OnFrame(6))
         {
-            if (fm.IsFlagTrue("PERFORMING_FULLHOP_FLAG"))
-                fm.fighterController.ApproachVertivalVelocity(FULLHOP_DECELERATION, 0.0f);
-            else if (fm.IsFlagTrue("PERFORMING_SHORTHOP_FLAG"))
-                fm.fighterController.ApproachVertivalVelocity(SHORTHOP_DECELERATION, 0.0f);
-            fm.SetFlag("PERFORMING_FULLHOP_FLAG", false);
-            fm.SetFlag("PERFORMING_SHORTHOP_FLAG", false);
+            if (fm.IsFlagTrue("PERFORMING_FULLJUMP_FLAG"))
+                fm.fighterController.ApproachVerticalVelocity(FULLJUMP_AIR_DECELERATION, 0.0f);
+            else if (fm.IsFlagTrue("PERFORMING_SHORTJUMP_FLAG"))
+                fm.fighterController.ApproachVerticalVelocity(SHORTJUMP_AIR_DECELERATION, 0.0f);
+            fm.SetFlag("PERFORMING_FULLJUMP_FLAG", false);
+            fm.SetFlag("PERFORMING_SHORTJUMP_FLAG", false);
+            fm.SetFlag("NO_TRANSITION_TO_FALLING_STATE_FLAG", false);
+        }
+    }
+
+    private static void AIR_JUMP_RISING_ACMD(FighterMoveset fm)
+    {
+        float joystickMultiplier = fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().x;
+        fm.fighterController.ApproachHorizontalVelocity(AIR_DRIFT_ACCELERATION, AIR_DRIFT_SPEED * joystickMultiplier);
+
+        if (fm.OnFrame(0))
+        {
+            fm.SetFlag("NO_TRANSITION_TO_FALLING_STATE_FLAG", true);
+
+            fm.SetFlag("GROUND_JUMP_PERFORMED_FLAG", true);
+            fm.SetFlag("PERFORMING_FULLJUMP_FLAG", false);
+            fm.SetFlag("PERFORMING_SHORTJUMP_FLAG", false);
+
+            fm.airJumpsCount++;
+            if (fm.airJumpsCount == MAX_AIR_JUMP_COUNT)
+                fm.SetFlag("LAST_AIR_JUMP_PERFORMED", true);
+
+            fm.fighterController.SetVerticalVelocity(AIRJUMP_JUMP_SPEED);
+        }
+
+        if (fm.OnFrame(6))
+        {
+            fm.fighterController.ApproachVerticalVelocity(AIRJUMP_AIR_DECELERATION, 0.0f);
             fm.SetFlag("NO_TRANSITION_TO_FALLING_STATE_FLAG", false);
         }
     }
