@@ -1,16 +1,13 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Unity.VisualScripting;
-using UnityEditor.Experimental.GraphView;
-using UnityEditor.Rendering.LookDev;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class InputManager : MonoBehaviour
 {
     InputAction anyKeyAction;
+    InputAction reloadSceneAction;
 
     [field: SerializeField] public InputActionAsset inputActions { get; set; }
 
@@ -38,8 +35,16 @@ public class InputManager : MonoBehaviour
         if (inputActions != null)
         {
             anyKeyAction = inputActions.FindActionMap("AnyKey").FindAction("AnyKey");
+            reloadSceneAction = inputActions.FindActionMap("AnyKey").FindAction("ReloadScene");
         }
         anyKeyAction.started += OnAnyKeyPerformed;
+        reloadSceneAction.started += OnReloadScenePerformed;
+        reloadSceneAction.Enable();
+    }
+
+    private void OnReloadScenePerformed(InputAction.CallbackContext context)
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);     
     }
 
     void OnValidate()
@@ -50,6 +55,8 @@ public class InputManager : MonoBehaviour
 
     void Update()
     {
+        if (!reloadSceneAction.enabled)
+            reloadSceneAction.Enable();
         if (allowControllerAssigns && !anyKeyAction.enabled)
         {
             anyKeyAction.Enable();
@@ -66,8 +73,14 @@ public class InputManager : MonoBehaviour
         if (inputActions != null)
         {
             anyKeyAction = inputActions.FindActionMap("AnyKey").FindAction("AnyKey");
+            reloadSceneAction = inputActions.FindActionMap("AnyKey").FindAction("ReloadScene");
         }
         anyKeyAction.started -= OnAnyKeyPerformed;
+        reloadSceneAction.started -= OnReloadScenePerformed;
+        
+        anyKeyAction.Disable();
+        reloadSceneAction.Disable();
+        
         Instance = null;
     }
 
@@ -121,6 +134,6 @@ public class InputManager : MonoBehaviour
         lastConnect = Time.time;
     }
 
-    public InputAction FindInputAction(string actionMapName, string actionName)
-        => inputActions.FindActionMap(actionMapName).FindAction(actionName);
+    public static InputAction FindInputAction(InputActionAsset inputActionAsset, string actionMapName, string actionName)
+        => inputActionAsset.FindActionMap(actionMapName).FindAction(actionName);
 }

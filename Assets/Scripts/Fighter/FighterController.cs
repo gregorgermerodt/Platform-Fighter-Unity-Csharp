@@ -2,8 +2,9 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UIElements;
 using System.Data.Common;
+using System;
 
-[RequireComponent(typeof(Rigidbody), typeof(BoxCollider))]
+[RequireComponent(typeof(BoxCollider))]
 public class FighterController : MonoBehaviour
 {
     [SerializeField] private float CHECK_DISTANCE = 0.2f;
@@ -26,6 +27,8 @@ public class FighterController : MonoBehaviour
 
     [field: SerializeField] public bool isInHitStun { get; private set; } = false;
 
+    public FighterMoveset.FaceDirection faceDirection { get; private set; }
+
 
     void Awake()
     {
@@ -36,18 +39,6 @@ public class FighterController : MonoBehaviour
     {
         groundLayerMasks = 1 << LayerMask.NameToLayer("Ground");
         platformLayerMasks = 1 << LayerMask.NameToLayer("Platform");
-
-        collider = GetComponent<BoxCollider>();
-        collider.center = Vector3.up * CHECK_DISTANCE;
-        collider.size = new Vector3(
-            FIGHTER_WIDTH,
-            CHECK_DISTANCE,
-            FIGHTER_WIDTH
-        );
-        collider.includeLayers = groundLayerMasks | platformLayerMasks;
-        collider.excludeLayers = 1 << LayerMask.NameToLayer("Player");
-        collider.isTrigger = true;
-
         //rigidbody = GetComponent<Rigidbody>();
         //rigidbody.automaticCenterOfMass = false;
         //rigidbody.automaticInertiaTensor = false;
@@ -72,11 +63,6 @@ public class FighterController : MonoBehaviour
         //HandleWalls();
 
         transform.Translate(currentVelocity, Space.World);
-
-        if (transform.position.y < -10)
-        {
-            transform.position = new Vector3(0.0f, 25.0f, 0.0f);
-        }
         transform.position = new Vector3(transform.position.x, transform.position.y, 0.0f);
     }
 
@@ -113,18 +99,18 @@ public class FighterController : MonoBehaviour
         if (CheckGroundCommon(origin, rayDirection, rayLength, out hitInfo))
         {
 
-            if (hitInfo.distance > CHECK_DISTANCE)
-            {
-                currentVelocity = rayDirection * hitInfo.distance * 0.75f;
-                //transform.position = hitInfo.point - rayDirection * hitInfo.distance;
-            }
-            else
-            {
-                transform.position = hitInfo.point;
-                currentVelocity.y = 0.0f;
-                floorCollider = hitInfo.collider;
-                isGrounded = true;
-            }
+            //if (hitInfo.distance > CHECK_DISTANCE)
+            //{
+            //    currentVelocity = rayDirection * hitInfo.distance * 0.75f;
+            //    //transform.position = hitInfo.point - rayDirection * hitInfo.distance;
+            //}
+            //else
+            //{
+            transform.position = hitInfo.point;
+            currentVelocity.y = 0.0f;
+            floorCollider = hitInfo.collider;
+            isGrounded = true;
+            //}
         }
 
 
@@ -234,5 +220,23 @@ public class FighterController : MonoBehaviour
             Gizmos.color = Color.yellow;
             Gizmos.DrawRay(origin, rayDirection * rayLength);
         }
+    }
+
+    public void UpdateLookDirection(FighterMoveset.FaceDirection lookDirection)
+    {
+        faceDirection = lookDirection;
+        if (lookDirection == FighterMoveset.FaceDirection.RIGHT && transform.eulerAngles.y > 0.0f)
+        {
+            transform.rotation = Quaternion.Euler(0f, -70.0f, 0.0f);
+        }
+        else if (lookDirection == FighterMoveset.FaceDirection.LEFT && transform.eulerAngles.y - 360 < 0.0f)
+        {
+            transform.rotation = Quaternion.Euler(0f, 70.0f, 0.0f);
+        }
+    }
+
+    internal void DestroyHitbox(AttackHitbox ahb)
+    {
+        Destroy(ahb);
     }
 }

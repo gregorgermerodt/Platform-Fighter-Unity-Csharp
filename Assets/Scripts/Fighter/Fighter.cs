@@ -1,4 +1,3 @@
-using Unity.VisualScripting.Dependencies.Sqlite;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,13 +6,18 @@ public class Fighter : MonoBehaviour
     public enum CharacterType
     {
         None,
-        Mario,
-        Luigi
+        Red,
+        Green,
     }
 
-    [SerializeField] public int playerNumber;
+    [field: SerializeField] public int playerNumber { get; private set; }
     [SerializeField] public FighterMoveset fighterMoveset;
     [field: SerializeField] public CharacterType characterType { get; private set; }
+
+    [SerializeField] private InputActionAsset inputActionAsset;
+    [SerializeField] public float percentDamage;
+
+    [SerializeField] private FighterMoveset.FaceDirection initialFaceDirection;
 
     [SerializeField] private bool frameByFrame = false;
     [SerializeField] private bool continueFrame = false;
@@ -22,8 +26,10 @@ public class Fighter : MonoBehaviour
     {
         InputManager inputManager = FindAnyObjectByType<InputManager>();
         inputManager.UpdateDeviceIdsEvent += UpdateDeviceIds;
-        fighterMoveset = MovesetRegistry.GetBuilder("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterController>());
+        fighterMoveset
+            = MovesetRegistry.GetBlueprint("BASIC_MOVESET", inputActionAsset).movesetBuilder.BuildFighterMoveset(GetComponentInChildren<FighterController>(), GetComponentInChildren<Animator>());
         UpdateDeviceIds(inputManager);
+        fighterMoveset.SetFaceDirection(initialFaceDirection);
     }
 
     void OnValidate()
@@ -45,13 +51,19 @@ public class Fighter : MonoBehaviour
         {
             InputManager inputManager = FindAnyObjectByType<InputManager>();
             inputManager.UpdateDeviceIdsEvent += UpdateDeviceIds;
-            fighterMoveset = MovesetRegistry.GetBuilder("BASIC_MOVESET").BuildFighterMoveset(GetComponentInChildren<FighterController>());
+            fighterMoveset = MovesetRegistry.GetBlueprint("BASIC_MOVESET", inputActionAsset).movesetBuilder.BuildFighterMoveset(GetComponentInChildren<FighterController>(), GetComponentInChildren<Animator>());
             UpdateDeviceIds(inputManager);
         }
         if (!frameByFrame || continueFrame)
         {
             fighterMoveset.UpdateTick();
             continueFrame = false;
+        }
+        if (!(transform.position.y > -15 && transform.position.y < 30) || !(transform.position.x < 30 || transform.position.x > -30))
+        {
+            transform.position = new Vector3(0.0f, 25.0f, 0.0f);
+            fighterMoveset.fighterController.SetVelocity(Vector2.zero);
+            percentDamage = 0.0f;
         }
     }
 

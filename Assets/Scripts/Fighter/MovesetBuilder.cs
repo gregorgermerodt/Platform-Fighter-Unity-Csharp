@@ -37,7 +37,7 @@ public class MovesetBuilder
     public List<GeneralAnimationCommandWrapper> generalAcmds { get; private set; }
     public Dictionary<string, ACMD> acmds { get; private set; }
 
-    public FighterMoveset.LookDirection lookDirection { get; private set; }
+    public FighterMoveset.FaceDirection lookDirection { get; private set; }
 
     public MovesetBuilder()
     {
@@ -46,7 +46,7 @@ public class MovesetBuilder
         this.flags = new Dictionary<string, bool>();
         this.inputActions = new Dictionary<string, InputActionWrapper>();
         this.generalAcmds = new List<GeneralAnimationCommandWrapper>();
-        this.lookDirection = FighterMoveset.LookDirection.RIGHT;
+        this.lookDirection = FighterMoveset.FaceDirection.RIGHT;
     }
 
     public MovesetBuilder AddState(string state)
@@ -161,7 +161,7 @@ public class MovesetBuilder
     }
 
     public MovesetBuilder MergeData(HashSet<string> states, Dictionary<string, bool> flags, Dictionary<string, InputActionWrapper> inputActions,
-    List<GeneralAnimationCommandWrapper> generalAcmds, Dictionary<string, ACMD> acmds, FighterMoveset.LookDirection lookDirection)
+    List<GeneralAnimationCommandWrapper> generalAcmds, Dictionary<string, ACMD> acmds, FighterMoveset.FaceDirection lookDirection)
     {
         AddStates(states);
         AddFlags(flags);
@@ -175,7 +175,7 @@ public class MovesetBuilder
     public MovesetBuilder MergeData(FighterMoveset fighterMoveset)
     {
         MergeData(fighterMoveset.states, fighterMoveset.flags, fighterMoveset.inputActions,
-        fighterMoveset.generalAcmds, fighterMoveset.acmds, fighterMoveset.lookDirection);
+        fighterMoveset.generalAcmds, fighterMoveset.acmds, fighterMoveset.faceDirection);
         return this;
     }
 
@@ -186,12 +186,15 @@ public class MovesetBuilder
         return this;
     }
 
-    public FighterMoveset BuildFighterMoveset(FighterController fighterController)
+    public FighterMoveset BuildFighterMoveset(FighterController fighterController, Animator fighterAnimator)
     {
         if (fighterController == null)
             throw new ArgumentNullException(nameof(fighterController), "fighterController darf nicht null sein.");
+        
+        if (fighterAnimator == null)
+            throw new ArgumentNullException(nameof(fighterAnimator), "fighterAnimator darf nicht null sein.");
 
         generalAcmds.Sort((gacmd1, gacmd2) => gacmd1.priority.CompareTo(gacmd2.priority));
-        return new FighterMoveset(fighterController, acmds, generalAcmds, states, flags, inputActions, lookDirection);
+        return new FighterMoveset(fighterController, fighterAnimator, acmds, generalAcmds, states, flags, inputActions, lookDirection);
     }
 }

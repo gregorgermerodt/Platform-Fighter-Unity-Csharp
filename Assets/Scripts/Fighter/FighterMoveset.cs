@@ -1,16 +1,20 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class FighterMoveset
 {
-    public enum LookDirection
+    public enum FaceDirection
     {
         RIGHT,
         LEFT
     }
 
     public FighterController fighterController;
+    private Animator animator;
+    private string currentAnimationName;
+    private bool loopAnimation;
 
     public HashSet<string> states { get; private set; }
     public Dictionary<string, bool> flags { get; private set; }
@@ -18,22 +22,27 @@ public class FighterMoveset
     public List<GeneralAnimationCommandWrapper> generalAcmds { get; private set; }
     public Dictionary<string, ACMD> acmds { get; private set; }
 
-    public LookDirection lookDirection { get; private set; }
+    public FaceDirection faceDirection { get; private set; }
 
     private ACMD currentAcmd;
     public string currentAcmdName { get; private set; }
     public string currentState { get; private set; }
+
+
+    [SerializeField] private List<AttackHitbox> activeAttackHitboxes;
+    private List<AttackHitbox> expiredHitboxes;
 
     public int frameCounter { get; private set; } = 0;
     public int targetFrame { get; private set; } = 0;
 
     [SerializeField] public int airJumpsCount = 0;
 
-    public FighterMoveset(FighterController fighterController, Dictionary<string, ACMD> acmds,
+    public FighterMoveset(FighterController fighterController, Animator animator, Dictionary<string, ACMD> acmds,
         List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states,
-        Dictionary<string, bool> flags, Dictionary<string, InputActionWrapper> inputActions, LookDirection lookDirection)
+        Dictionary<string, bool> flags, Dictionary<string, InputActionWrapper> inputActions, FaceDirection lookDirection)
     {
         this.fighterController = fighterController;
+        this.animator = animator;
 
         this.acmds = acmds;
         this.states = states;
@@ -41,13 +50,14 @@ public class FighterMoveset
         this.inputActions = inputActions;
         this.generalAcmds = generalAcmds;
 
-        this.lookDirection = lookDirection;
+        this.faceDirection = lookDirection;
 
         this.currentAcmdName = "STANDING_ACMD";
         this.currentAcmd = acmds["STANDING_ACMD"];
         this.currentState = "STANDING_STATE";
 
-        //AddDebugAcmd();
+        activeAttackHitboxes = new List<AttackHitbox>();
+        PlayAnimation("Idle");
     }
 
     //private void AddDebugAcmd()
@@ -66,20 +76,38 @@ public class FighterMoveset
         targetFrame = 0;
         fighterController.UpdateTick();
 
+        activeAttackHitboxes.RemoveAll(ahb =>
+        {
+            if (ahb.endFrame <= frameCounter || ahb.summoningState != currentState)
+            {
+                fighterController.DestroyHitbox(ahb);
+                return true;
+            }
+            return false;
+        });
+
         foreach (var gacmd in generalAcmds)
         {
             gacmd.acmd(this);
         }
+
         if (frameCounter == 0)
-            Debug.Log("Running ACMD: \"" + currentAcmdName + "\", Current State: " + currentState);
+            Debug.Log("(Re-)Starting ACMD: \"" + currentAcmdName + "\", Current State: " + currentState);
 
         currentAcmd(this);
+
 
         foreach (var pair in inputActions)
         {
             pair.Value.ResetInputStates();
         }
         frameCounter++;
+    }
+
+    public void SetFaceDirection(FaceDirection ld)
+    {
+        faceDirection = ld;
+        fighterController.UpdateLookDirection(faceDirection);
     }
 
     public void ForceTransitionToAcmd(string acmdName, bool resetFrameCounter = true)
@@ -139,7 +167,6 @@ public class FighterMoveset
         {
             currentState = stateName;
         }
-
         //Debug.Log("Transitioned to State: " + currentState);
     }
 
@@ -172,5 +199,81 @@ public class FighterMoveset
     public bool OnFrame(int frame) => frame == frameCounter;
 
     public bool OnFrames(int firstFrame, int lastIncludedFrame) => frameCounter >= firstFrame && frameCounter <= lastIncludedFrame;
+
+    public void PlayAnimation(string animationName, float speed = 1, bool loop = true)
+    {
+        Debug.Log("Playing Animation: \"" + animationName + "\", Speed: " + speed + ", Loop: " + (loop ? "True" : "False"));
+        if (animator != null)
+        {
+            loopAnimation = true;
+            animator.speed = speed;
+            animator.SetBool("Loop", loop);
+            animator.Play(animationName, 0, 0);
+            currentAnimationName = animationName;
+        }
+        else
+        {
+            Debug.LogError("Animator ist nicht zugewiesen.");
+        }
+    }
+
+    public float GetAnimationProgress()
+    {
+        if (animator != null)
+        {
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0); // Layer 0
+
+            float progress = stateInfo.normalizedTime >= 1 ? 1 : stateInfo.normalizedTime; // Verwenden Sie den Modulo-Operator, um Werte über 1 zu berücksichtigen
+            return progress;
+        }
+        else
+        {
+            Debug.LogError("Animator ist nicht zugewiesen.");
+            return 0; // Geben Sie zurück, dass die Animation nicht spielt und keinen Fortschritt hat
+        }
+    }
+
+    public bool IsAnimationPlaying()
+    {
+        return animator.GetCurrentAnimatorStateInfo(0).normalizedTime <= 1; // Wenn normalizedTime kleiner als 1 ist, spielt die Animation noch
+    }
+
+    public void SetAnimationLoop(bool value) => loopAnimation = value;
+
+    public void SetAnimationSpeed(float speed) => animator.speed = speed;
+
+    public bool IsAnimationLooping() => loopAnimation;
+
+    public string GetCurrentAnimationName() => currentAnimationName;
+
+    public void CreateHitbox(int duration, float damage, float knockback, float baseKnockback, Vector2 direction, bool considerLookDirection, string boneName, float radius, Vector3 offset)
+    {
+        Transform bone = FindDeepChild(fighterController.gameObject.transform, boneName);
+        AttackHitbox ahb = fighterController.gameObject.AddComponent<AttackHitbox>();
+
+        Vector3 direction3d = new Vector3(direction.x, direction.y, 0.0f).normalized;
+        direction3d.x *= considerLookDirection && faceDirection == FaceDirection.RIGHT ? 1 : -1;
+
+        ahb.Initialize(fighterController.gameObject.GetComponent<Fighter>(), frameCounter, frameCounter + duration, damage, baseKnockback, knockback, direction3d, bone, radius, offset);
+
+        activeAttackHitboxes.Add(ahb);
+    }
+
+    Transform FindDeepChild(Transform parent, string name)
+    {
+        if (parent.name == name)
+        {
+            return parent;
+        }
+        foreach (Transform child in parent)
+        {
+            Transform result = FindDeepChild(child, name);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+        return null;
+    }
 
 }

@@ -1,5 +1,5 @@
 {
-    "name": "InputActions",
+    "name": "MarioInputActions",
     "maps": [
         {
             "name": "InGame",
@@ -27,6 +27,15 @@
                     "name": "Shield",
                     "type": "Button",
                     "id": "0c80924e-8a36-40fa-8759-6ab383aca53e",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Attack",
+                    "type": "Button",
+                    "id": "35a62c34-7a1c-4945-8e46-3f7f1583ae6d",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -154,6 +163,28 @@
                     "action": "Shield",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f85a3197-b2c5-4ccb-873d-f45de5391757",
+                    "path": "<Keyboard>/c",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Attack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b8a55c4e-e78f-4a65-8f01-dd32c73713f4",
+                    "path": "<Gamepad>/buttonEast",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Attack",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -165,6 +196,15 @@
                     "name": "AnyKey",
                     "type": "Button",
                     "id": "3482ce43-d103-4f12-ab86-01d5545582c9",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ReloadScene",
+                    "type": "Button",
+                    "id": "ef6196fc-45cd-46ad-a64c-c1fdbaeb0384",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -356,6 +396,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "AnyKey",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "72c7229e-7026-4f1b-9337-5c0340ad9682",
+                    "path": "<Keyboard>/f1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ReloadScene",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

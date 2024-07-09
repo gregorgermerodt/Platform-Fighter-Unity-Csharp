@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine.InputSystem;
+using UnityEngine.TextCore.LowLevel;
 
 public abstract class IMovesetBlueprint : UnityEngine.Object
 {
@@ -8,17 +10,22 @@ public abstract class IMovesetBlueprint : UnityEngine.Object
 
     protected abstract HashSet<string> DefineStates();
     protected abstract Dictionary<string, bool> DefineFlags();
-    protected abstract List<InputAction> DefineInputActions();
+    protected abstract List<(string, string)> DefineInputActions();
     protected abstract List<GeneralAnimationCommandWrapper> DefineGeneralAcmds();
     protected abstract Dictionary<string, ACMD> DefineAcmds();
 
     public IMovesetBlueprint()
     {
         movesetBuilder.AddStates(DefineStates());
-        movesetBuilder.AddFlags(DefineFlags());
-        movesetBuilder.AddInputActions(DefineInputActions());
+        movesetBuilder.AddFlags(new Dictionary<string, bool>(DefineFlags()));
         movesetBuilder.AddGeneralAcmds(DefineGeneralAcmds());
         movesetBuilder.AddAcmds(DefineAcmds());
+    }
+
+    public void CreateInputsfromAsset(InputActionAsset inputActionAsset)
+    {
+        foreach (var pair in DefineInputActions())
+            movesetBuilder.AddInputAction(InputManager.FindInputAction(inputActionAsset, pair.Item1, pair.Item2));
     }
 
     protected GeneralAnimationCommandWrapper NewGACMD(int priority, string description, ACMD acmd)
