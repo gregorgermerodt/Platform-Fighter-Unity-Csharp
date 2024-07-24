@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine.UIElements;
 using System.Data.Common;
 using System;
+using UnityEngine.TextCore;
 
 [RequireComponent(typeof(BoxCollider))]
 public class FighterController : MonoBehaviour
@@ -56,9 +57,10 @@ public class FighterController : MonoBehaviour
         isGrounded = false;
         previousPosition = transform.position;
 
+        if (currentVelocity.y <= 0.0f)
         HandleGround();
-        //else if (currentVelocity.y > 0.0f)
-        //HandleCeiling();
+        else if (currentVelocity.y > 0.0f)
+        HandleCeiling();
         //if (currentVelocity.magnitude != 0.0f)
         //HandleWalls();
 
@@ -66,11 +68,35 @@ public class FighterController : MonoBehaviour
         transform.position = new Vector3(transform.position.x, transform.position.y, 0.0f);
     }
 
+    private void HandleCeiling()
+    {
+        Vector3 origin = previousPosition + Vector3.right * currentVelocity.x;
+        Vector3 rayDirection = Vector3.up;
+        RaycastHit hitInfo;
+        float rayLength = 2.0f;
+
+        bool hit;
+
+        hit = Physics.Raycast(
+            origin,
+            rayDirection,
+            out hitInfo,
+            rayLength,
+            groundLayerMasks
+        );
+        if (hit) {
+            Vector3 ceilingSlopeDirection = Vector3.Cross(hitInfo.normal, Vector3.forward);
+            if (ceilingSlopeDirection.y < 0.0f)
+                ceilingSlopeDirection.y *= 1.0f;
+            Vector3.Normalize(ceilingSlopeDirection);
+            currentVelocity = ceilingSlopeDirection * Vector3.Dot(currentVelocity, ceilingSlopeDirection);
+            transform.position = hitInfo.point - new Vector3(0.0f, 2.0f, 0.0f);
+            //currentVelocity.y = 0.0f;
+        }
+    }
+
     private void HandleGround()
     {
-        if (currentVelocity.y > 0.0f)
-            return;
-
         RaycastHit hitInfo;
         Vector3 origin;
         Vector3 rayDirection;

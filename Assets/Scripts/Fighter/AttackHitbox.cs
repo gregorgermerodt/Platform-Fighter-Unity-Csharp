@@ -48,7 +48,7 @@ public class AttackHitbox : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         Fighter hitFighter;
-        other.gameObject.TryGetComponent<Fighter>(out hitFighter);
+        other.gameObject.TryGetComponent(out hitFighter);
         if (hitFighter != null)
         {
             if (hitFighter.playerNumber != owner.playerNumber && !alreadyHit.Contains(other))
@@ -60,6 +60,7 @@ public class AttackHitbox : MonoBehaviour
                     hitFighter.fighterMoveset.SetFaceDirection(FighterMoveset.FaceDirection.RIGHT);
                 else if (direction.x > 0)
                     hitFighter.fighterMoveset.SetFaceDirection(FighterMoveset.FaceDirection.LEFT);
+                //hitFighter.fighterMoveset.TransitionToState("FALLING_STATE");
             }
         }
     }
