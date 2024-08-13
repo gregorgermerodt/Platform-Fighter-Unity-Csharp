@@ -7,7 +7,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 
-public class MCHEditorWindow : EditorWindow
+public class ParameterTable : EditorWindow
 {
     [System.Serializable]
     public class CharacterStats
@@ -17,6 +17,7 @@ public class MCHEditorWindow : EditorWindow
         public float xpos;
         public float ypos;
         public float zpos;
+        public float walkSpeed;
     }
     private static List<CharacterStats> characterStats;
     private TextAsset csvFile;
@@ -49,6 +50,7 @@ public class MCHEditorWindow : EditorWindow
             currCharVal.xpos = float.Parse(values[2]);
             currCharVal.ypos = float.Parse(values[3]);
             currCharVal.zpos = float.Parse(values[4]);
+            currCharVal.walkSpeed = float.Parse(values[5]);
 
             characterStats.Add(currCharVal);
         }
@@ -71,12 +73,12 @@ public class MCHEditorWindow : EditorWindow
     {
         List<string> lines = new List<string>
         {
-            "Name;Scale;xPos;yPos;zPos"
+            "Name;Scale;xPos;yPos;zPos;walkSpeed"
         };
 
         foreach (var character in characterStats)
         {
-            string line = $"{character.name};{character.scale};{character.xpos};{character.ypos};{character.zpos}";
+            string line = $"{character.name};{character.scale};{character.xpos};{character.ypos};{character.zpos};{character.walkSpeed}";
             lines.Add(line);
         }
 
@@ -92,9 +94,9 @@ public class MCHEditorWindow : EditorWindow
     }
 
     [MenuItem(itemName: "Tools/Stats table")]
-    public static MCHEditorWindow Open()
+    public static ParameterTable Open()
     {
-        MCHEditorWindow mchEditorWindow = EditorWindow.GetWindow<MCHEditorWindow>(
+        ParameterTable mchEditorWindow = EditorWindow.GetWindow<ParameterTable>(
             title: "Character stats",
             focus: true // set window in foreground => ready for input
         );
@@ -111,67 +113,19 @@ public class MCHEditorWindow : EditorWindow
 
     private void Initialize()
     {
+
         _firstOnGUIIterationAfterInitialize = true;
         _multiColumnHeaderWidth = position.width;
-        float posColumnsWidth = 50.0f;
+        float clomunsMinWidth = 20.0f;
+        float columnsMaxWidth = 150.0f;
         _columns = new MultiColumnHeaderState.Column[]
         {
-            new MultiColumnHeaderState.Column()
-            {
-                allowToggleVisibility = false,
-				autoResize = true,
-                minWidth = 100.0f,
-                maxWidth = 100.0f,
-                canSort = true,
-                sortingArrowAlignment = TextAlignment.Right,
-                headerContent = new GUIContent("Name"),
-                headerTextAlignment = TextAlignment.Center,
-
-            },
-            new MultiColumnHeaderState.Column()
-            {
-                allowToggleVisibility = true,
-                autoResize = true,
-                minWidth = posColumnsWidth,
-                maxWidth = posColumnsWidth,
-                canSort = false,
-                sortingArrowAlignment = TextAlignment.Right,
-                headerContent = new GUIContent("Scale"),
-                headerTextAlignment = TextAlignment.Center,
-            },
-            new MultiColumnHeaderState.Column()
-            {
-                allowToggleVisibility = true,
-                autoResize = true,
-                minWidth = posColumnsWidth,
-                maxWidth = posColumnsWidth,
-                canSort = false,
-                sortingArrowAlignment = TextAlignment.Right,
-                headerContent = new GUIContent("X-Pos"),
-                headerTextAlignment = TextAlignment.Center,
-            },
-            new MultiColumnHeaderState.Column()
-            {
-                allowToggleVisibility = true,
-                autoResize = true,
-                minWidth = posColumnsWidth,
-                maxWidth = posColumnsWidth,
-                canSort = false,
-                sortingArrowAlignment = TextAlignment.Right,
-                headerContent = new GUIContent("Y-Pos"),
-                headerTextAlignment = TextAlignment.Center,
-            },
-            new MultiColumnHeaderState.Column()
-            {
-                allowToggleVisibility = true,
-                autoResize = true,
-                minWidth = posColumnsWidth,
-                maxWidth = posColumnsWidth,
-                canSort = false,
-                sortingArrowAlignment = TextAlignment.Right,
-                headerContent = new GUIContent("Z-Pos"),
-                headerTextAlignment = TextAlignment.Center,
-            },
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Name"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Scale"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "X-Pos"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Y-Pos"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Z-Pos"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Walk Speed"),
         };
 
         _multiColumnHeaderState = new MultiColumnHeaderState(columns: _columns);
@@ -190,6 +144,21 @@ public class MCHEditorWindow : EditorWindow
 
         // Initial resizing of the content.
         _multiColumnHeader.ResizeToFit();
+    }
+
+    private static MultiColumnHeaderState.Column CreateMultiColumnHeraderState_Column(float minWidth, float maxWidth, string name)
+    {
+        return new MultiColumnHeaderState.Column()
+        {
+            allowToggleVisibility = true,
+            autoResize = true,
+            minWidth = minWidth,
+            maxWidth = maxWidth,
+            canSort = false,
+            sortingArrowAlignment = TextAlignment.Right,
+            headerContent = new GUIContent(name),
+            headerTextAlignment = TextAlignment.Center,
+        };
     }
 
     private readonly Color _lighterColor = new Color(r: 1.0f, g: 1.0f, b: 1.0f, a: 0.15f);
@@ -374,6 +343,24 @@ public class MCHEditorWindow : EditorWindow
                         currentCharacter.zpos = EditorGUI.FloatField(
                             position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
                             value: currentCharacter.zpos,
+                            style: fieldStyle
+                        );
+                    }
+                    // walkSpeed field
+                    columnIndex = 5;
+                    if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+                    {
+                        int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+                        Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+                        columnRect.y = rowRect.y + heightJump;
+                        //columnRect.height += heightJump;
+                        GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                        };
+                        currentCharacter.walkSpeed = EditorGUI.FloatField(
+                            position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                            value: currentCharacter.walkSpeed,
                             style: fieldStyle
                         );
                     }
