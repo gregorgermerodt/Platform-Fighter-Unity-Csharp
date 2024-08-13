@@ -7,44 +7,19 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 
-public class Test
-{
-    float a = ParameterTable.characterStats[0].AIR_DRIFT_SPEED;
-}
+//public class Test
+//{
+//    float a = ParameterTable.characterStats[0].AIR_DRIFT_SPEED;
+//}
 
 public class ParameterTable : EditorWindow
 {
-    [System.Serializable]
-    public class CharacterStats
-    {
-        public string NAME;
-
-        public float WALKING_SPEED;
-
-        public float HORIZONTAL_GROUND_DECELERATION;
-
-        public float FALL_SPEED;
-        public float FALL_GRAVITY_ACCELERATION;
-
-        public float AIR_DRIFT_SPEED;
-        public float AIR_DRIFT_ACCELERATION;
-
-        public float SHORTJUMP_JUMP_SPEED;
-        public float SHORTJUMP_AIR_DECELERATION;
-        public float FULLJUMP_JUMP_SPEED;
-        public float FULLJUMP_AIR_DECELERATION;
-        public float AIRJUMP_JUMP_SPEED;
-        public float AIRJUMP_AIR_DECELERATION;
-
-        public float MAX_AIR_JUMP_COUNT;
-    }
-    public static List<CharacterStats> characterStats;
+    public FighterStats fighterStats;
     private TextAsset csvFile;
 
     private void OnEnable()
     {
         csvFile = Resources.Load<TextAsset>("CSV-Files/stats");
-        characterStats = new List<CharacterStats>();
         ReadCSVFile();
     }
 
@@ -63,37 +38,22 @@ public class ParameterTable : EditorWindow
 
             string[] values = lines[i].Split(';');
 
-            CharacterStats currCharVal = new CharacterStats();
-            currCharVal.NAME                            = values[0];
-            currCharVal.WALKING_SPEED                   = float.Parse(values[1]);
-            currCharVal.HORIZONTAL_GROUND_DECELERATION  = float.Parse(values[2]);
-            currCharVal.FALL_SPEED                      = float.Parse(values[3]);
-            currCharVal.FALL_GRAVITY_ACCELERATION       = float.Parse(values[4]);
-            currCharVal.AIR_DRIFT_SPEED                 = float.Parse(values[5]);
-            currCharVal.AIR_DRIFT_ACCELERATION          = float.Parse(values[6]);
-            currCharVal.SHORTJUMP_JUMP_SPEED            = float.Parse(values[7]);
-            currCharVal.SHORTJUMP_AIR_DECELERATION      = float.Parse(values[8]);
-            currCharVal.FULLJUMP_JUMP_SPEED             = float.Parse(values[9]);
-            currCharVal.FULLJUMP_AIR_DECELERATION       = float.Parse(values[10]);
-            currCharVal.AIRJUMP_JUMP_SPEED              = float.Parse(values[11]);
-            currCharVal.AIRJUMP_AIR_DECELERATION        = float.Parse(values[12]);
-            currCharVal.MAX_AIR_JUMP_COUNT              = float.Parse(values[13]);
 
-            characterStats.Add(currCharVal);
+            fighterStats.NAME = values[0];
+            fighterStats.WALKING_SPEED = float.Parse(values[1]);
+            fighterStats.HORIZONTAL_GROUND_DECELERATION = float.Parse(values[2]);
+            fighterStats.FALL_SPEED = float.Parse(values[3]);
+            fighterStats.FALL_GRAVITY_ACCELERATION = float.Parse(values[4]);
+            fighterStats.AIR_DRIFT_SPEED = float.Parse(values[5]);
+            fighterStats.AIR_DRIFT_ACCELERATION = float.Parse(values[6]);
+            fighterStats.SHORTJUMP_JUMP_SPEED = float.Parse(values[7]);
+            fighterStats.SHORTJUMP_AIR_DECELERATION = float.Parse(values[8]);
+            fighterStats.FULLJUMP_JUMP_SPEED = float.Parse(values[9]);
+            fighterStats.FULLJUMP_AIR_DECELERATION = float.Parse(values[10]);
+            fighterStats.AIRJUMP_JUMP_SPEED = float.Parse(values[11]);
+            fighterStats.AIRJUMP_AIR_DECELERATION = float.Parse(values[12]);
+            fighterStats.MAX_AIR_JUMP_COUNT = float.Parse(values[13]);
         }
-    }
-
-    public static CharacterStats GetCharValues(string characterName)
-    {
-        foreach (CharacterStats characterStat in characterStats)
-        {
-            if (characterStat.NAME == characterName)
-            {
-                return characterStat;
-            }
-        }
-        Debug.LogError("No player with the specified name found");
-        return new CharacterStats();
     }
 
     private void SaveToCSV()
@@ -115,25 +75,24 @@ public class ParameterTable : EditorWindow
             "AIRJUMP_AIR_DECELERATION;" +
             "MAX_AIR_JUMP_COUNT;"
         };
-        foreach (var c in characterStats) // c = character
-        {
-            string line = 
-                $"{c.NAME};" +
-                $"{c.WALKING_SPEED};" +
-                $"{c.HORIZONTAL_GROUND_DECELERATION};" +
-                $"{c.FALL_SPEED};" +
-                $"{c.FALL_GRAVITY_ACCELERATION};" +
-                $"{c.AIR_DRIFT_SPEED};" +
-                $"{c.AIR_DRIFT_ACCELERATION}" +
-                $"{c.SHORTJUMP_JUMP_SPEED};" +
-                $"{c.SHORTJUMP_AIR_DECELERATION};" +
-                $"{c.FULLJUMP_JUMP_SPEED};" +
-                $"{c.FULLJUMP_AIR_DECELERATION};" +
-                $"{c.AIRJUMP_JUMP_SPEED};" +
-                $"{c.AIRJUMP_AIR_DECELERATION};" +
-                $"{c.MAX_AIR_JUMP_COUNT};";
-            lines.Add(line);
-        }
+
+        string line =
+            $"{fighterStats.NAME};" +
+            $"{fighterStats.WALKING_SPEED};" +
+            $"{fighterStats.HORIZONTAL_GROUND_DECELERATION};" +
+            $"{fighterStats.FALL_SPEED};" +
+            $"{fighterStats.FALL_GRAVITY_ACCELERATION};" +
+            $"{fighterStats.AIR_DRIFT_SPEED};" +
+            $"{fighterStats.AIR_DRIFT_ACCELERATION}" +
+            $"{fighterStats.SHORTJUMP_JUMP_SPEED};" +
+            $"{fighterStats.SHORTJUMP_AIR_DECELERATION};" +
+            $"{fighterStats.FULLJUMP_JUMP_SPEED};" +
+            $"{fighterStats.FULLJUMP_AIR_DECELERATION};" +
+            $"{fighterStats.AIRJUMP_JUMP_SPEED};" +
+            $"{fighterStats.AIRJUMP_AIR_DECELERATION};" +
+            $"{fighterStats.MAX_AIR_JUMP_COUNT};";
+        lines.Add(line);
+
 
         File.WriteAllLines(GetCSVFilePath(), lines);
         AssetDatabase.Refresh();
@@ -303,9 +262,9 @@ public class ParameterTable : EditorWindow
                 float rowHeight = 20.0f;
 
                 // fill columns in each row
-                for (int a = 0; a < characterStats.Count; a++)
+                //for (int a = 0; a < characterStats.Count; a++)
                 {
-                    CharacterStats currentCharacter = characterStats[a];
+                    FighterStats currentCharacter = fighterStats;
 
                     Rect rowRect = new Rect(source: columnRectPrototype);
 
@@ -330,7 +289,7 @@ public class ParameterTable : EditorWindow
                         };
                         EditorGUI.LabelField(
                             position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                            label: new GUIContent(characterStats[a].NAME),
+                            label: new GUIContent(currentCharacter.NAME),
                             style: nameFieldGUIStyle
                         );
                     }
@@ -577,10 +536,10 @@ public class ParameterTable : EditorWindow
                     };
 
                     // draw a texture before drawing each of the fields for the whole row.
-                    if (a % 2 == 0)
-                        EditorGUI.DrawRect(rect: backgroundColorRect, color: _darkerColor);
-                    else
-                        EditorGUI.DrawRect(rect: backgroundColorRect, color: _lighterColor);
+                    //if (a % 2 == 0)
+                    //    EditorGUI.DrawRect(rect: backgroundColorRect, color: _darkerColor);
+                    //else
+                    EditorGUI.DrawRect(rect: backgroundColorRect, color: _lighterColor);
 
                     heightJump += rowHeight;
 

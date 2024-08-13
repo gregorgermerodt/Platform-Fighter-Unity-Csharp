@@ -13,6 +13,7 @@ public class FighterMoveset
 
     public FighterController fighterController;
     private Animator animator;
+    public FighterStats fighterStats;
     private string currentAnimationName;
     private bool loopAnimation;
 
@@ -36,12 +37,13 @@ public class FighterMoveset
 
     [SerializeField] public int airJumpsCount = 0;
 
-    public FighterMoveset(FighterController fighterController, Animator animator, Dictionary<string, ACMD> acmds,
+    public FighterMoveset(FighterController fighterController, Animator animator, FighterStats fighterStats, Dictionary<string, ACMD> acmds,
         List<GeneralAnimationCommandWrapper> generalAcmds, HashSet<string> states,
         Dictionary<string, bool> flags, Dictionary<string, InputActionWrapper> inputActions, FaceDirection lookDirection)
     {
         this.fighterController = fighterController;
         this.animator = animator;
+        this.fighterStats = fighterStats;
 
         this.acmds = acmds;
         this.states = states;
@@ -103,7 +105,8 @@ public class FighterMoveset
         frameCounter++;
     }
 
-    public void setStickHoldingDown(bool isStickHoldingDown) {
+    public void setStickHoldingDown(bool isStickHoldingDown)
+    {
         fighterController.isStickHoldingDown = isStickHoldingDown;
     }
 

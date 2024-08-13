@@ -3,16 +3,10 @@ using UnityEngine.InputSystem;
 
 public class Fighter : MonoBehaviour
 {
-    public enum CharacterType
-    {
-        None,
-        Red,
-        Green,
-    }
+    [SerializeField] public FighterStats fighterStats;
 
     [field: SerializeField] public int playerNumber { get; private set; }
     [SerializeField] public FighterMoveset fighterMoveset;
-    [field: SerializeField] public CharacterType characterType { get; private set; }
 
     [SerializeField] private InputActionAsset inputActionAsset;
     [SerializeField] public float percentDamage;
@@ -27,7 +21,7 @@ public class Fighter : MonoBehaviour
         InputManager inputManager = FindAnyObjectByType<InputManager>();
         inputManager.UpdateDeviceIdsEvent += UpdateDeviceIds;
         fighterMoveset
-            = MovesetRegistry.GetBlueprint("BASIC_MOVESET", inputActionAsset).movesetBuilder.BuildFighterMoveset(GetComponentInChildren<FighterController>(), GetComponentInChildren<Animator>());
+            = MovesetRegistry.GetBlueprint("BASIC_MOVESET", inputActionAsset).movesetBuilder.BuildFighterMoveset(GetComponentInChildren<FighterController>(), GetComponentInChildren<Animator>(), fighterStats);
         UpdateDeviceIds(inputManager);
         fighterMoveset.SetFaceDirection(initialFaceDirection);
     }
@@ -51,7 +45,7 @@ public class Fighter : MonoBehaviour
         {
             InputManager inputManager = FindAnyObjectByType<InputManager>();
             inputManager.UpdateDeviceIdsEvent += UpdateDeviceIds;
-            fighterMoveset = MovesetRegistry.GetBlueprint("BASIC_MOVESET", inputActionAsset).movesetBuilder.BuildFighterMoveset(GetComponentInChildren<FighterController>(), GetComponentInChildren<Animator>());
+            fighterMoveset = MovesetRegistry.GetBlueprint("BASIC_MOVESET", inputActionAsset).movesetBuilder.BuildFighterMoveset(GetComponentInChildren<FighterController>(), GetComponentInChildren<Animator>(), fighterStats);
             UpdateDeviceIds(inputManager);
         }
         if (!frameByFrame || continueFrame)

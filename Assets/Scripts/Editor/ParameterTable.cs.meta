@@ -3,7 +3,9 @@ guid: 17e6db7523ef8354893568ef72c3f8a0
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - m_ViewDataDictionary: {instanceID: 0}
+  - fighterStats: {fileID: 11400000, guid: 6689515f46876e74bb6a85fc8fe4470b, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

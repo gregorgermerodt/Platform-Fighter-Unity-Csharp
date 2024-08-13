@@ -186,15 +186,18 @@ public class MovesetBuilder
         return this;
     }
 
-    public FighterMoveset BuildFighterMoveset(FighterController fighterController, Animator fighterAnimator)
+    public FighterMoveset BuildFighterMoveset(FighterController fighterController, Animator fighterAnimator, FighterStats fighterStats)
     {
         if (fighterController == null)
             throw new ArgumentNullException(nameof(fighterController), "fighterController darf nicht null sein.");
-        
+
         if (fighterAnimator == null)
             throw new ArgumentNullException(nameof(fighterAnimator), "fighterAnimator darf nicht null sein.");
 
+        if (fighterStats == null)
+            throw new ArgumentNullException(nameof(fighterAnimator), "fighterStats darf nicht null sein.");
+
         generalAcmds.Sort((gacmd1, gacmd2) => gacmd1.priority.CompareTo(gacmd2.priority));
-        return new FighterMoveset(fighterController, fighterAnimator, acmds, generalAcmds, states, flags, inputActions, lookDirection);
+        return new FighterMoveset(fighterController, fighterAnimator, fighterStats, acmds, generalAcmds, states, flags, inputActions, lookDirection);
     }
 }
