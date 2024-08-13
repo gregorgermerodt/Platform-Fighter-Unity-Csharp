@@ -29,7 +29,7 @@ public class FighterController : MonoBehaviour
     [field: SerializeField] public bool isInHitStun { get; private set; } = false;
 
     public FighterMoveset.FaceDirection faceDirection { get; private set; }
-
+    public bool isStickHoldingDown = false;
 
     void Awake()
     {
@@ -58,9 +58,9 @@ public class FighterController : MonoBehaviour
         previousPosition = transform.position;
 
         if (currentVelocity.y <= 0.0f)
-        HandleGround();
+            HandleGround();
         else if (currentVelocity.y > 0.0f)
-        HandleCeiling();
+            HandleCeiling();
         //if (currentVelocity.magnitude != 0.0f)
         //HandleWalls();
 
@@ -84,7 +84,8 @@ public class FighterController : MonoBehaviour
             rayLength,
             groundLayerMasks
         );
-        if (hit) {
+        if (hit)
+        {
             Vector3 ceilingSlopeDirection = Vector3.Cross(hitInfo.normal, Vector3.forward);
             if (ceilingSlopeDirection.y < 0.0f)
                 ceilingSlopeDirection.y *= 1.0f;
@@ -107,7 +108,8 @@ public class FighterController : MonoBehaviour
             origin = previousPosition + Vector3.right * currentVelocity.x + Vector3.up * CHECK_DISTANCE;
             rayDirection = -Vector3.up;
             rayLength = CHECK_DISTANCE * 2;
-            if (CheckGroundCommon(origin, rayDirection, rayLength, out hitInfo))
+            if (CheckGroundCommon(origin, rayDirection, rayLength, out hitInfo)
+            && !CheckShouldPlayerFallThroughPlatform(hitInfo))
             {
                 transform.position = hitInfo.point;
                 currentVelocity.y = 0.0f;
@@ -122,7 +124,8 @@ public class FighterController : MonoBehaviour
         rayDirection = currentVelocity.normalized;
         rayLength = CHECK_DISTANCE + currentVelocity.magnitude;
 
-        if (CheckGroundCommon(origin, rayDirection, rayLength, out hitInfo))
+        if (CheckGroundCommon(origin, rayDirection, rayLength, out hitInfo)
+        && !CheckShouldPlayerFallThroughPlatform(hitInfo))
         {
 
             //if (hitInfo.distance > CHECK_DISTANCE)
@@ -142,6 +145,10 @@ public class FighterController : MonoBehaviour
 
     }
 
+    private bool CheckShouldPlayerFallThroughPlatform(RaycastHit hitInfo)
+    {
+        return 1 << hitInfo.transform.gameObject.layer == platformLayerMasks && isStickHoldingDown;
+    }
 
     private bool CheckGroundCommon(Vector3 origin, Vector3 rayDirection, float rayLength, out RaycastHit hitInfo)
     {

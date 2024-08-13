@@ -17,9 +17,9 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
     const float AIR_DRIFT_SPEED = 0.2f;
     const float AIR_DRIFT_ACCELERATION = 1.0f;
 
-    const float SHORTJUMP_JUMP_SPEED = 0.6f;
+    const float SHORTJUMP_JUMP_SPEED = 0.62f;
     const float SHORTJUMP_AIR_DECELERATION = 22.0f;
-    const float FULLJUMP_JUMP_SPEED = 0.8f;
+    const float FULLJUMP_JUMP_SPEED = 0.81f;
     const float FULLJUMP_AIR_DECELERATION = 28.0f;
     const float AIRJUMP_JUMP_SPEED = 0.8f;
     const float AIRJUMP_AIR_DECELERATION = 28.0f;
@@ -172,6 +172,7 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
         {
             fm.fighterController.ApproachVerticalVelocity(FALL_GRAVITY_ACCELERATION, -FALL_SPEED);
         }
+        fm.setStickHoldingDown(fm.inputActions["Movement"].inputAction.ReadValue<Vector2>().y < -0.8f);
     }
 
     private static void ACMD_TRANSITION_CONDITIONS_GACMD(FighterMoveset fm)
@@ -212,8 +213,8 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
         }
         else if (fm.IsCurrentState("F_AIR_ATTACK_STATE"))
         {
-            if (fm.IsFlagFalse("PERFORMING_AIR_JUMP_FLAG") 
-            && fm.IsFlagFalse("PERFORMING_SHORTJUMP_FLAG") 
+            if (fm.IsFlagFalse("PERFORMING_AIR_JUMP_FLAG")
+            && fm.IsFlagFalse("PERFORMING_SHORTJUMP_FLAG")
             && fm.IsFlagFalse("PERFORMING_FULLJUMP_FLAG"))
                 fm.TransitionToAcmd("F_AIR_ATTACK_ACMD");
         }
@@ -383,8 +384,8 @@ public class BasicMovesetBlueprint : IMovesetBlueprint
 
         if (fm.OnFrame(6))
         {
-            fm.CreateHitbox(duration: 3, damage: 10, baseKnockback: 0.3f, knockback: 0.005f, direction: new Vector2(1, 1), considerLookDirection: true,
-                            boneName: "Sword", radius: 0.007f, offset: new Vector3(0, 0, 0.007f));
+            fm.CreateHitbox(duration: 2, damage: 10, baseKnockback: 0.3f, knockback: 0.005f, direction: new Vector2(1, 1), considerLookDirection: true,
+                            boneName: "Armature", radius: 0.8f, offset: new Vector3(0, -1.8f, 1.3f));
         }
 
         if (fm.OnFrame(35))

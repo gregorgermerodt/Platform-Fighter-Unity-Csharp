@@ -59,7 +59,7 @@ public class Fighter : MonoBehaviour
             fighterMoveset.UpdateTick();
             continueFrame = false;
         }
-        if (!(transform.position.y > -15 && transform.position.y < 30) || !(transform.position.x < 30 || transform.position.x > -30))
+        if (!(transform.position.y > -15) || !(transform.position.x < 30 || transform.position.x > -30))
         {
             transform.position = new Vector3(0.0f, 25.0f, 0.0f);
             fighterMoveset.fighterController.SetVelocity(Vector2.zero);

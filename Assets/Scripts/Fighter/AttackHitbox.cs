@@ -60,7 +60,7 @@ public class AttackHitbox : MonoBehaviour
                     hitFighter.fighterMoveset.SetFaceDirection(FighterMoveset.FaceDirection.RIGHT);
                 else if (direction.x > 0)
                     hitFighter.fighterMoveset.SetFaceDirection(FighterMoveset.FaceDirection.LEFT);
-                //hitFighter.fighterMoveset.TransitionToState("FALLING_STATE");
+                hitFighter.fighterMoveset.OnHit();
             }
         }
     }

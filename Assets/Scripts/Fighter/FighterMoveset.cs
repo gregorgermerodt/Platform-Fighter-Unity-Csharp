@@ -28,7 +28,6 @@ public class FighterMoveset
     public string currentAcmdName { get; private set; }
     public string currentState { get; private set; }
 
-
     [SerializeField] private List<AttackHitbox> activeAttackHitboxes;
     private List<AttackHitbox> expiredHitboxes;
 
@@ -76,11 +75,11 @@ public class FighterMoveset
         targetFrame = 0;
         fighterController.UpdateTick();
 
-        activeAttackHitboxes.RemoveAll(ahb =>
+        activeAttackHitboxes.RemoveAll(hitbox =>
         {
-            if (ahb.endFrame <= frameCounter || ahb.summoningState != currentState)
+            if (hitbox.endFrame <= frameCounter || hitbox.summoningState != currentState)
             {
-                fighterController.DestroyHitbox(ahb);
+                fighterController.DestroyHitbox(hitbox);
                 return true;
             }
             return false;
@@ -104,9 +103,21 @@ public class FighterMoveset
         frameCounter++;
     }
 
-    public void SetFaceDirection(FaceDirection ld)
+    public void setStickHoldingDown(bool isStickHoldingDown) {
+        fighterController.isStickHoldingDown = isStickHoldingDown;
+    }
+
+
+    public void OnHit()
     {
-        faceDirection = ld;
+        TransitionToState("FALLING_STATE");
+        ForceTransitionToAcmd("FALLING_ACMD");
+        PlayAnimation("AirIdle");
+    }
+
+    public void SetFaceDirection(FaceDirection fd)
+    {
+        faceDirection = fd;
         fighterController.UpdateLookDirection(faceDirection);
     }
 
@@ -249,14 +260,14 @@ public class FighterMoveset
     public void CreateHitbox(int duration, float damage, float knockback, float baseKnockback, Vector2 direction, bool considerLookDirection, string boneName, float radius, Vector3 offset)
     {
         Transform bone = FindDeepChild(fighterController.gameObject.transform, boneName);
-        AttackHitbox ahb = fighterController.gameObject.AddComponent<AttackHitbox>();
+        AttackHitbox hitbox = fighterController.gameObject.AddComponent<AttackHitbox>();
 
         Vector3 direction3d = new Vector3(direction.x, direction.y, 0.0f).normalized;
         direction3d.x *= considerLookDirection && faceDirection == FaceDirection.RIGHT ? 1 : -1;
 
-        ahb.Initialize(fighterController.gameObject.GetComponent<Fighter>(), frameCounter, frameCounter + duration, damage, baseKnockback, knockback, direction3d, bone, radius, offset);
+        hitbox.Initialize(fighterController.gameObject.GetComponent<Fighter>(), frameCounter, frameCounter + duration, damage, baseKnockback, knockback, direction3d, bone, radius, offset);
 
-        activeAttackHitboxes.Add(ahb);
+        activeAttackHitboxes.Add(hitbox);
     }
 
     Transform FindDeepChild(Transform parent, string name)
