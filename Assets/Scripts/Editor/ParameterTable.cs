@@ -7,19 +7,38 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 
+public class Test
+{
+    float a = ParameterTable.characterStats[0].AIR_DRIFT_SPEED;
+}
+
 public class ParameterTable : EditorWindow
 {
     [System.Serializable]
     public class CharacterStats
     {
-        public string name;
-        public float scale;
-        public float xpos;
-        public float ypos;
-        public float zpos;
-        public float walkSpeed;
+        public string NAME;
+
+        public float WALKING_SPEED;
+
+        public float HORIZONTAL_GROUND_DECELERATION;
+
+        public float FALL_SPEED;
+        public float FALL_GRAVITY_ACCELERATION;
+
+        public float AIR_DRIFT_SPEED;
+        public float AIR_DRIFT_ACCELERATION;
+
+        public float SHORTJUMP_JUMP_SPEED;
+        public float SHORTJUMP_AIR_DECELERATION;
+        public float FULLJUMP_JUMP_SPEED;
+        public float FULLJUMP_AIR_DECELERATION;
+        public float AIRJUMP_JUMP_SPEED;
+        public float AIRJUMP_AIR_DECELERATION;
+
+        public float MAX_AIR_JUMP_COUNT;
     }
-    private static List<CharacterStats> characterStats;
+    public static List<CharacterStats> characterStats;
     private TextAsset csvFile;
 
     private void OnEnable()
@@ -45,12 +64,20 @@ public class ParameterTable : EditorWindow
             string[] values = lines[i].Split(';');
 
             CharacterStats currCharVal = new CharacterStats();
-            currCharVal.name = values[0];
-            currCharVal.scale = float.Parse(values[1]);
-            currCharVal.xpos = float.Parse(values[2]);
-            currCharVal.ypos = float.Parse(values[3]);
-            currCharVal.zpos = float.Parse(values[4]);
-            currCharVal.walkSpeed = float.Parse(values[5]);
+            currCharVal.NAME                            = values[0];
+            currCharVal.WALKING_SPEED                   = float.Parse(values[1]);
+            currCharVal.HORIZONTAL_GROUND_DECELERATION  = float.Parse(values[2]);
+            currCharVal.FALL_SPEED                      = float.Parse(values[3]);
+            currCharVal.FALL_GRAVITY_ACCELERATION       = float.Parse(values[4]);
+            currCharVal.AIR_DRIFT_SPEED                 = float.Parse(values[5]);
+            currCharVal.AIR_DRIFT_ACCELERATION          = float.Parse(values[6]);
+            currCharVal.SHORTJUMP_JUMP_SPEED            = float.Parse(values[7]);
+            currCharVal.SHORTJUMP_AIR_DECELERATION      = float.Parse(values[8]);
+            currCharVal.FULLJUMP_JUMP_SPEED             = float.Parse(values[9]);
+            currCharVal.FULLJUMP_AIR_DECELERATION       = float.Parse(values[10]);
+            currCharVal.AIRJUMP_JUMP_SPEED              = float.Parse(values[11]);
+            currCharVal.AIRJUMP_AIR_DECELERATION        = float.Parse(values[12]);
+            currCharVal.MAX_AIR_JUMP_COUNT              = float.Parse(values[13]);
 
             characterStats.Add(currCharVal);
         }
@@ -60,7 +87,7 @@ public class ParameterTable : EditorWindow
     {
         foreach (CharacterStats characterStat in characterStats)
         {
-            if (characterStat.name == characterName)
+            if (characterStat.NAME == characterName)
             {
                 return characterStat;
             }
@@ -73,12 +100,38 @@ public class ParameterTable : EditorWindow
     {
         List<string> lines = new List<string>
         {
-            "Name;Scale;xPos;yPos;zPos;walkSpeed"
+            "NAME;" +
+            "WALKING_SPEED;" +
+            "HORIZONTAL_GROUND_DECELERATION;" +
+            "FALL_SPEED;" +
+            "FALL_GRAVITY_ACCELERATION;" +
+            "AIR_DRIFT_SPEED;" +
+            "AIR_DRIFT_ACCELERATION;" +
+            "SHORTJUMP_JUMP_SPEED;" +
+            "SHORTJUMP_AIR_DECELERATION;" +
+            "FULLJUMP_JUMP_SPEED;" +
+            "FULLJUMP_AIR_DECELERATION;" +
+            "AIRJUMP_JUMP_SPEED;" +
+            "AIRJUMP_AIR_DECELERATION;" +
+            "MAX_AIR_JUMP_COUNT;"
         };
-
-        foreach (var character in characterStats)
+        foreach (var c in characterStats) // c = character
         {
-            string line = $"{character.name};{character.scale};{character.xpos};{character.ypos};{character.zpos};{character.walkSpeed}";
+            string line = 
+                $"{c.NAME};" +
+                $"{c.WALKING_SPEED};" +
+                $"{c.HORIZONTAL_GROUND_DECELERATION};" +
+                $"{c.FALL_SPEED};" +
+                $"{c.FALL_GRAVITY_ACCELERATION};" +
+                $"{c.AIR_DRIFT_SPEED};" +
+                $"{c.AIR_DRIFT_ACCELERATION}" +
+                $"{c.SHORTJUMP_JUMP_SPEED};" +
+                $"{c.SHORTJUMP_AIR_DECELERATION};" +
+                $"{c.FULLJUMP_JUMP_SPEED};" +
+                $"{c.FULLJUMP_AIR_DECELERATION};" +
+                $"{c.AIRJUMP_JUMP_SPEED};" +
+                $"{c.AIRJUMP_AIR_DECELERATION};" +
+                $"{c.MAX_AIR_JUMP_COUNT};";
             lines.Add(line);
         }
 
@@ -121,11 +174,18 @@ public class ParameterTable : EditorWindow
         _columns = new MultiColumnHeaderState.Column[]
         {
             CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Name"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Scale"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "X-Pos"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Y-Pos"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Z-Pos"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Walk Speed"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "WAL_SPE"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "HOR_GRO_DEC"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "FAL_SPE"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "FAL_GRA_ACC"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "AIR_DRI_SPE"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "SHO_JUM_SPE"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "SHO_AIR_DEC"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "FUL_JUM_SPE"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "FUL_AIR_DEC"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "AIR_JUM_SPE"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "AIR_AIR_DEC"),
+            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "MAX_AIR_JUM_COU"),
         };
 
         _multiColumnHeaderState = new MultiColumnHeaderState(columns: _columns);
@@ -270,11 +330,11 @@ public class ParameterTable : EditorWindow
                         };
                         EditorGUI.LabelField(
                             position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                            label: new GUIContent(characterStats[a].name),
+                            label: new GUIContent(characterStats[a].NAME),
                             style: nameFieldGUIStyle
                         );
                     }
-                    // scale field
+                    // WALKING_SPEED  field
                     columnIndex = 1;
                     if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
                     {
@@ -286,13 +346,13 @@ public class ParameterTable : EditorWindow
                         {
                             alignment = TextAnchor.MiddleCenter,
                         };
-                        currentCharacter.scale = EditorGUI.FloatField(
+                        currentCharacter.WALKING_SPEED = EditorGUI.FloatField(
                             position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                            value: currentCharacter.scale,
+                            value: currentCharacter.WALKING_SPEED,
                             style: fieldStyle
                         );
                     }
-                    // xpos field
+                    // HORIZONTAL_GROUND_DECELERATION field
                     columnIndex = 2;
                     if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
                     {
@@ -304,13 +364,13 @@ public class ParameterTable : EditorWindow
                         {
                             alignment = TextAnchor.MiddleCenter,
                         };
-                        currentCharacter.xpos = EditorGUI.FloatField(
+                        currentCharacter.HORIZONTAL_GROUND_DECELERATION = EditorGUI.FloatField(
                             position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                            value: currentCharacter.xpos,
+                            value: currentCharacter.HORIZONTAL_GROUND_DECELERATION,
                             style: fieldStyle
                         );
                     }
-                    // ypos field
+                    // FALL_SPEED field
                     columnIndex = 3;
                     if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
                     {
@@ -322,13 +382,13 @@ public class ParameterTable : EditorWindow
                         {
                             alignment = TextAnchor.MiddleCenter,
                         };
-                        currentCharacter.ypos = EditorGUI.FloatField(
+                        currentCharacter.FALL_SPEED = EditorGUI.FloatField(
                             position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                            value: currentCharacter.ypos,
+                            value: currentCharacter.FALL_SPEED,
                             style: fieldStyle
                         );
                     }
-                    // zpos field
+                    // FALL_GRAVITY_ACCELERATION field
                     columnIndex = 4;
                     if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
                     {
@@ -340,13 +400,13 @@ public class ParameterTable : EditorWindow
                         {
                             alignment = TextAnchor.MiddleCenter,
                         };
-                        currentCharacter.zpos = EditorGUI.FloatField(
+                        currentCharacter.FALL_GRAVITY_ACCELERATION = EditorGUI.FloatField(
                             position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                            value: currentCharacter.zpos,
+                            value: currentCharacter.FALL_GRAVITY_ACCELERATION,
                             style: fieldStyle
                         );
                     }
-                    // walkSpeed field
+                    // AIR_DRIFT_SPEED field
                     columnIndex = 5;
                     if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
                     {
@@ -358,9 +418,153 @@ public class ParameterTable : EditorWindow
                         {
                             alignment = TextAnchor.MiddleCenter,
                         };
-                        currentCharacter.walkSpeed = EditorGUI.FloatField(
+                        currentCharacter.AIR_DRIFT_SPEED = EditorGUI.FloatField(
                             position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                            value: currentCharacter.walkSpeed,
+                            value: currentCharacter.AIR_DRIFT_SPEED,
+                            style: fieldStyle
+                        );
+                    }
+                    // AIR_DRIFT_ACCELERATION field
+                    columnIndex = 6;
+                    if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+                    {
+                        int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+                        Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+                        columnRect.y = rowRect.y + heightJump;
+                        //columnRect.height += heightJump;
+                        GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                        };
+                        currentCharacter.AIR_DRIFT_ACCELERATION = EditorGUI.FloatField(
+                            position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                            value: currentCharacter.AIR_DRIFT_ACCELERATION,
+                            style: fieldStyle
+                        );
+                    }
+                    // SHORTJUMP_JUMP_SPEED field
+                    columnIndex = 7;
+                    if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+                    {
+                        int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+                        Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+                        columnRect.y = rowRect.y + heightJump;
+                        //columnRect.height += heightJump;
+                        GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                        };
+                        currentCharacter.SHORTJUMP_JUMP_SPEED = EditorGUI.FloatField(
+                            position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                            value: currentCharacter.SHORTJUMP_JUMP_SPEED,
+                            style: fieldStyle
+                        );
+                    }
+                    // SHORTJUMP_AIR_DECELERATION field
+                    columnIndex = 8;
+                    if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+                    {
+                        int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+                        Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+                        columnRect.y = rowRect.y + heightJump;
+                        //columnRect.height += heightJump;
+                        GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                        };
+                        currentCharacter.SHORTJUMP_AIR_DECELERATION = EditorGUI.FloatField(
+                            position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                            value: currentCharacter.SHORTJUMP_AIR_DECELERATION,
+                            style: fieldStyle
+                        );
+                    }
+                    // FULLJUMP_JUMP_SPEED field
+                    columnIndex = 9;
+                    if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+                    {
+                        int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+                        Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+                        columnRect.y = rowRect.y + heightJump;
+                        //columnRect.height += heightJump;
+                        GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                        };
+                        currentCharacter.FULLJUMP_JUMP_SPEED = EditorGUI.FloatField(
+                            position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                            value: currentCharacter.FULLJUMP_JUMP_SPEED,
+                            style: fieldStyle
+                        );
+                    }
+                    // FULLJUMP_AIR_DECELERATION field
+                    columnIndex = 10;
+                    if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+                    {
+                        int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+                        Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+                        columnRect.y = rowRect.y + heightJump;
+                        //columnRect.height += heightJump;
+                        GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                        };
+                        currentCharacter.FULLJUMP_AIR_DECELERATION = EditorGUI.FloatField(
+                            position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                            value: currentCharacter.FULLJUMP_AIR_DECELERATION,
+                            style: fieldStyle
+                        );
+                    }
+                    // AIRJUMP_JUMP_SPEED field
+                    columnIndex = 11;
+                    if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+                    {
+                        int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+                        Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+                        columnRect.y = rowRect.y + heightJump;
+                        //columnRect.height += heightJump;
+                        GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                        };
+                        currentCharacter.AIRJUMP_JUMP_SPEED = EditorGUI.FloatField(
+                            position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                            value: currentCharacter.AIRJUMP_JUMP_SPEED,
+                            style: fieldStyle
+                        );
+                    }
+                    // AIRJUMP_AIR_DECELERATION field
+                    columnIndex = 12;
+                    if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+                    {
+                        int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+                        Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+                        columnRect.y = rowRect.y + heightJump;
+                        //columnRect.height += heightJump;
+                        GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                        };
+                        currentCharacter.AIRJUMP_AIR_DECELERATION = EditorGUI.FloatField(
+                            position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                            value: currentCharacter.AIRJUMP_AIR_DECELERATION,
+                            style: fieldStyle
+                        );
+                    }
+                    // MAX_AIR_JUMP_COUNT field
+                    columnIndex = 13;
+                    if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+                    {
+                        int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+                        Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+                        columnRect.y = rowRect.y + heightJump;
+                        //columnRect.height += heightJump;
+                        GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                        };
+                        currentCharacter.MAX_AIR_JUMP_COUNT = EditorGUI.FloatField(
+                            position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                            value: currentCharacter.MAX_AIR_JUMP_COUNT,
                             style: fieldStyle
                         );
                     }
@@ -380,11 +584,11 @@ public class ParameterTable : EditorWindow
 
                     heightJump += rowHeight;
 
-                    // if an element of the tool table has changed, update the scene
-                    if (GUI.changed)
-                    {
-                        UpStatsOfCharInScene(currentCharacter);
-                    }
+                    //// if an element of the tool table has changed, update the scene
+                    //if (GUI.changed)
+                    //{
+                    //    UpStatsOfCharInScene(currentCharacter);
+                    //}
                 }
             }
             GUI.EndScrollView(handleScrollWheel: true);
@@ -411,19 +615,19 @@ public class ParameterTable : EditorWindow
         _firstOnGUIIterationAfterInitialize = false;
     }
 
-    private static void UpStatsOfCharInScene(CharacterStats currentCharacter)
-    {
-        GameObject currChar = GameObject.Find(currentCharacter.name);
-        if(currChar != null)
-        {
-            currChar.transform.localScale = new Vector3(currentCharacter.scale, currentCharacter.scale, currentCharacter.scale);
-            currChar.transform.position = new Vector3(currentCharacter.xpos, currentCharacter.ypos, currentCharacter.zpos);
-        }
-        else
-        {
-            Debug.Log(currentCharacter.name + " has not been found in the scene");
-        }
-    }
+    //private static void UpStatsOfCharInScene(CharacterStats currentCharacter)
+    //{
+    //    GameObject currChar = GameObject.Find(currentCharacter.NAME);
+    //    if(currChar != null)
+    //    {
+    //        currChar.transform.localScale = new Vector3(currentCharacter.HORIZONTAL_GROUND_DECELERATION, currentCharacter.HORIZONTAL_GROUND_DECELERATION, currentCharacter.HORIZONTAL_GROUND_DECELERATION);
+    //        currChar.transform.position = new Vector3(currentCharacter.FALL_SPEED, currentCharacter.FALL_GRAVITY_ACCELERATION, currentCharacter.AIR_DRIFT_SPEED);
+    //    }
+    //    else
+    //    {
+    //        Debug.Log(currentCharacter.NAME + " has not been found in the scene");
+    //    }
+    //}
 
     private void Awake()
     {
