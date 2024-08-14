@@ -17,8 +17,10 @@ public class FighterStats : ScriptableObject
 
     public float SHORTJUMP_JUMP_SPEED;
     public float SHORTJUMP_AIR_DECELERATION;
+
     public float FULLJUMP_JUMP_SPEED;
     public float FULLJUMP_AIR_DECELERATION;
+
     public float AIRJUMP_JUMP_SPEED;
     public float AIRJUMP_AIR_DECELERATION;
 

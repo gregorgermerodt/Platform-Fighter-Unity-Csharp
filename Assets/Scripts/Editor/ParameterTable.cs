@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
@@ -6,11 +5,6 @@ using System.IO;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
-
-//public class Test
-//{
-//    float a = ParameterTable.characterStats[0].AIR_DRIFT_SPEED;
-//}
 
 public class ParameterTable : EditorWindow
 {
@@ -35,24 +29,21 @@ public class ParameterTable : EditorWindow
         for (int i = 1; i < lines.Length; i++)
         {
             if (string.IsNullOrWhiteSpace(lines[i])) continue;
-
             string[] values = lines[i].Split(';');
-
-
-            fighterStats.NAME = values[0];
-            fighterStats.WALKING_SPEED = float.Parse(values[1]);
+            fighterStats.NAME                           = values[0];
+            fighterStats.WALKING_SPEED                  = float.Parse(values[1]);
             fighterStats.HORIZONTAL_GROUND_DECELERATION = float.Parse(values[2]);
-            fighterStats.FALL_SPEED = float.Parse(values[3]);
-            fighterStats.FALL_GRAVITY_ACCELERATION = float.Parse(values[4]);
-            fighterStats.AIR_DRIFT_SPEED = float.Parse(values[5]);
-            fighterStats.AIR_DRIFT_ACCELERATION = float.Parse(values[6]);
-            fighterStats.SHORTJUMP_JUMP_SPEED = float.Parse(values[7]);
-            fighterStats.SHORTJUMP_AIR_DECELERATION = float.Parse(values[8]);
-            fighterStats.FULLJUMP_JUMP_SPEED = float.Parse(values[9]);
-            fighterStats.FULLJUMP_AIR_DECELERATION = float.Parse(values[10]);
-            fighterStats.AIRJUMP_JUMP_SPEED = float.Parse(values[11]);
-            fighterStats.AIRJUMP_AIR_DECELERATION = float.Parse(values[12]);
-            fighterStats.MAX_AIR_JUMP_COUNT = float.Parse(values[13]);
+            fighterStats.FALL_SPEED                     = float.Parse(values[3]);
+            fighterStats.FALL_GRAVITY_ACCELERATION      = float.Parse(values[4]);
+            fighterStats.AIR_DRIFT_SPEED                = float.Parse(values[5]);
+            fighterStats.AIR_DRIFT_ACCELERATION         = float.Parse(values[6]);
+            fighterStats.SHORTJUMP_JUMP_SPEED           = float.Parse(values[7]);
+            fighterStats.SHORTJUMP_AIR_DECELERATION     = float.Parse(values[8]);
+            fighterStats.FULLJUMP_JUMP_SPEED            = float.Parse(values[9]);
+            fighterStats.FULLJUMP_AIR_DECELERATION      = float.Parse(values[10]);
+            fighterStats.AIRJUMP_JUMP_SPEED             = float.Parse(values[11]);
+            fighterStats.AIRJUMP_AIR_DECELERATION       = float.Parse(values[12]);
+            fighterStats.MAX_AIR_JUMP_COUNT             = float.Parse(values[13]);
         }
     }
 
@@ -83,7 +74,7 @@ public class ParameterTable : EditorWindow
             $"{fighterStats.FALL_SPEED};" +
             $"{fighterStats.FALL_GRAVITY_ACCELERATION};" +
             $"{fighterStats.AIR_DRIFT_SPEED};" +
-            $"{fighterStats.AIR_DRIFT_ACCELERATION}" +
+            $"{fighterStats.AIR_DRIFT_ACCELERATION};" +
             $"{fighterStats.SHORTJUMP_JUMP_SPEED};" +
             $"{fighterStats.SHORTJUMP_AIR_DECELERATION};" +
             $"{fighterStats.FULLJUMP_JUMP_SPEED};" +
@@ -121,12 +112,12 @@ public class ParameterTable : EditorWindow
     private MultiColumnHeader _multiColumnHeader;
     private MultiColumnHeaderState.Column[] _columns;
     private float _multiColumnHeaderWidth;
-    private bool _firstOnGUIIterationAfterInitialize;
+    //private bool _firstOnGUIIterationAfterInitialize; // used for loop if there are more than one characterStats row
 
     private void Initialize()
     {
 
-        _firstOnGUIIterationAfterInitialize = true;
+        //_firstOnGUIIterationAfterInitialize = true; // used for loop if there are more than one characterStats row
         _multiColumnHeaderWidth = position.width;
         float clomunsMinWidth = 20.0f;
         float columnsMaxWidth = 150.0f;
@@ -181,16 +172,12 @@ public class ParameterTable : EditorWindow
         };
     }
 
-    private readonly Color _lighterColor = new Color(r: 1.0f, g: 1.0f, b: 1.0f, a: 0.15f);
-    private readonly Color _darkerColor = new Color(r: 0.0f, g: 0.0f, b: 0.0f, a: 0.15f);
-
     private Vector2 _scrollPosition;
 
     private void OnGUI()
     {
         // standard unity line height
         float columnHeight = EditorGUIUtility.singleLineHeight;
-
         // empty space to be able to use GUILayoutUtility.GetLastRect();
         GUILayout.FlexibleSpace();
         // get the rectangle of the empty space (whole window as it is empty)
@@ -198,22 +185,12 @@ public class ParameterTable : EditorWindow
         // match windowRect to window width and height
         windowRect.width = position.width;
         windowRect.height = position.height;
-
-        if (_multiColumnHeader == null)
-        {
-            Initialize();
-        }
-
+        if (_multiColumnHeader == null) Initialize();
         // makes table background more greyish
         GUIStyle groupGUIStyle = new GUIStyle(GUI.skin.box);
-
-        // pseudo padding (actually the size of the rectangle)
-        Vector2 groupRectPaddingInWindow = new Vector2(10.0f, 10.0f);
-        Rect groupRect = new Rect(source: windowRect);
-        groupRect.x += groupRectPaddingInWindow.x;
-        groupRect.y += groupRectPaddingInWindow.y;
-        groupRect.width -= groupRectPaddingInWindow.x * 2;
-        groupRect.height -= groupRectPaddingInWindow.y * 2;
+        Vector2 groupRectPaddingInWindow;
+        Rect groupRect;
+        CreatePseudoPadding(windowRect, out groupRectPaddingInWindow, out groupRect); // actually the size of the rectangle
 
         float heightJump = columnHeight;
         float rowHeight = 20.0f;
@@ -221,13 +198,10 @@ public class ParameterTable : EditorWindow
         // new group => positioning relative to groupRect
         GUI.BeginGroup(position: groupRect, style: groupGUIStyle);
         {   // Groupe scope
-
             // reset pseudo padding to correctly calculate the scrollView
             groupRect.x -= groupRectPaddingInWindow.x;
             groupRect.y -= groupRectPaddingInWindow.y;
-
             Rect positionalRectAreaOfScrollView = new Rect(source: groupRect);
-
             // create a `viewRect` since it should be separate from `rect` to avoid circular dependency.
             Rect viewRect = new Rect(source: groupRect)
             {
@@ -247,304 +221,22 @@ public class ParameterTable : EditorWindow
                 alwaysShowVertical: false
             );
             {   // ScrollView Scope.
-
                 // ensures the right multiColumnHeaderWidth
                 _multiColumnHeaderWidth = Mathf.Max(positionalRectAreaOfScrollView.width + _scrollPosition.x, _multiColumnHeaderWidth);
-
                 // rectangle for the multi column table.
                 Rect columnRectPrototype = new Rect(source: positionalRectAreaOfScrollView)
                 {
                     width = _multiColumnHeaderWidth,
                     height = columnHeight,
                 };
-
                 // draw header of the columns
                 _multiColumnHeader.OnGUI(rect: columnRectPrototype, xScroll: 0.0f);
-
-
                 // fill columns in each row
                 FighterStats currentCharacter = fighterStats;
-
                 Rect rowRect = new Rect(source: columnRectPrototype);
 
-                //rowRect.y += columnHeight * (a + 1); // every second row empty
-
-                // name field
-                int columnIndex = 0;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    // index of the visible columns
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    // determination of the rectangle of a visible column
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    // row height
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-
-                    // style of the field
-                    GUIStyle nameFieldGUIStyle = new GUIStyle(GUI.skin.label)
-                    {
-                        padding = new RectOffset(left: 10, right: 10, top: 2, bottom: 2)
-                    };
-                    EditorGUI.LabelField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        label: new GUIContent(currentCharacter.NAME),
-                        style: nameFieldGUIStyle
-                    );
-                }
-                // WALKING_SPEED  field
-                columnIndex = 1;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.WALKING_SPEED = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.WALKING_SPEED,
-                        style: fieldStyle
-                    );
-                }
-                // HORIZONTAL_GROUND_DECELERATION field
-                columnIndex = 2;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.HORIZONTAL_GROUND_DECELERATION = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.HORIZONTAL_GROUND_DECELERATION,
-                        style: fieldStyle
-                    );
-                }
-                // FALL_SPEED field
-                columnIndex = 3;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.FALL_SPEED = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.FALL_SPEED,
-                        style: fieldStyle
-                    );
-                }
-                // FALL_GRAVITY_ACCELERATION field
-                columnIndex = 4;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.FALL_GRAVITY_ACCELERATION = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.FALL_GRAVITY_ACCELERATION,
-                        style: fieldStyle
-                    );
-                }
-                // AIR_DRIFT_SPEED field
-                columnIndex = 5;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.AIR_DRIFT_SPEED = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.AIR_DRIFT_SPEED,
-                        style: fieldStyle
-                    );
-                }
-                // AIR_DRIFT_ACCELERATION field
-                columnIndex = 6;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.AIR_DRIFT_ACCELERATION = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.AIR_DRIFT_ACCELERATION,
-                        style: fieldStyle
-                    );
-                }
-                // SHORTJUMP_JUMP_SPEED field
-                columnIndex = 7;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.SHORTJUMP_JUMP_SPEED = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.SHORTJUMP_JUMP_SPEED,
-                        style: fieldStyle
-                    );
-                }
-                // SHORTJUMP_AIR_DECELERATION field
-                columnIndex = 8;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.SHORTJUMP_AIR_DECELERATION = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.SHORTJUMP_AIR_DECELERATION,
-                        style: fieldStyle
-                    );
-                }
-                // FULLJUMP_JUMP_SPEED field
-                columnIndex = 9;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.FULLJUMP_JUMP_SPEED = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.FULLJUMP_JUMP_SPEED,
-                        style: fieldStyle
-                    );
-                }
-                // FULLJUMP_AIR_DECELERATION field
-                columnIndex = 10;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.FULLJUMP_AIR_DECELERATION = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.FULLJUMP_AIR_DECELERATION,
-                        style: fieldStyle
-                    );
-                }
-                // AIRJUMP_JUMP_SPEED field
-                columnIndex = 11;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.AIRJUMP_JUMP_SPEED = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.AIRJUMP_JUMP_SPEED,
-                        style: fieldStyle
-                    );
-                }
-                // AIRJUMP_AIR_DECELERATION field
-                columnIndex = 12;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.AIRJUMP_AIR_DECELERATION = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.AIRJUMP_AIR_DECELERATION,
-                        style: fieldStyle
-                    );
-                }
-                // MAX_AIR_JUMP_COUNT field
-                columnIndex = 13;
-                if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
-                {
-                    int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
-                    Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
-                    columnRect.y = rowRect.y + heightJump;
-                    //columnRect.height += heightJump;
-                    GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                    };
-                    currentCharacter.MAX_AIR_JUMP_COUNT = EditorGUI.FloatField(
-                        position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
-                        value: currentCharacter.MAX_AIR_JUMP_COUNT,
-                        style: fieldStyle
-                    );
-                }
-                int buttonCount = 0;
-                // save button field
-                buttonCount = 1;
-                Rect saveButtonRect = new Rect(0, rowRect.y + heightJump + rowHeight * buttonCount, _multiColumnHeaderWidth, rowHeight);
-                GUILayout.BeginArea(saveButtonRect);
-                if (GUILayout.Button("Save to csv-file"))
-                {
-                    SaveToCSV();
-                }
-                GUILayout.EndArea();
-                // reset button field
-                buttonCount++;
-                Rect resetButtonRect = new Rect(0, rowRect.y + heightJump + rowHeight * buttonCount, _multiColumnHeaderWidth, rowHeight);
-                GUILayout.BeginArea(resetButtonRect);
-                if (GUILayout.Button("Reset Values"))
-                {
-                    ReadCSVFile();
-                }
-                GUILayout.EndArea();
+                rowRect = FillTableWithFighterStats(heightJump, currentCharacter, rowRect);
+                rowRect = CreateButtons(heightJump, rowHeight, rowRect);
 
                 // use saved height for each row to draw rectangles to prevent overlapping drawing
                 Rect backgroundColorRect = new Rect(source: rowRect)
@@ -552,54 +244,143 @@ public class ParameterTable : EditorWindow
                     y = rowRect.y + heightJump,
                     height = rowHeight
                 };
-
-                // draw a texture before drawing each of the fields for the whole row.
-                //if (a % 2 == 0)
-                //    EditorGUI.DrawRect(rect: backgroundColorRect, color: _darkerColor);
-                //else
-                EditorGUI.DrawRect(rect: backgroundColorRect, color: _lighterColor);
-
-                heightJump += rowHeight;
-
-                //// if an element of the tool table has changed, update the scene
-                //if (GUI.changed)
-                //{
-                //    UpStatsOfCharInScene(currentCharacter);
-                //}
-
             }
             GUI.EndScrollView(handleScrollWheel: true);
         }
         GUI.EndGroup();
 
-        if (!_firstOnGUIIterationAfterInitialize)
-        {
-            //! Uncomment this if you want to have appropriate ResizeToFit(). It brings jaggedness which I didn't like, so I have removed it knowing the implications.
-
-            //float difference = 50.0f;
-
-            ////! Magic number `difference` is just a number to ensure that this width won't be exceeded by this auto scale bug. Lowering this number could cause it to reappear.
-            ////? If you don't mind resizing to fit to sometimes overscale columns then just remove these next 2 lines of code.
-            //if (_multiColumnHeaderWidth - _multiColumnHeaderState.widthOfAllVisibleColumns > difference)
-            //	_multiColumnHeaderWidth -= difference;
-        }
-
-        _firstOnGUIIterationAfterInitialize = false;
+        //_firstOnGUIIterationAfterInitialize = false; // used for loop if there are more than one characterStats row
     }
 
-    //private static void UpStatsOfCharInScene(CharacterStats currentCharacter)
-    //{
-    //    GameObject currChar = GameObject.Find(currentCharacter.NAME);
-    //    if(currChar != null)
-    //    {
-    //        currChar.transform.localScale = new Vector3(currentCharacter.HORIZONTAL_GROUND_DECELERATION, currentCharacter.HORIZONTAL_GROUND_DECELERATION, currentCharacter.HORIZONTAL_GROUND_DECELERATION);
-    //        currChar.transform.position = new Vector3(currentCharacter.FALL_SPEED, currentCharacter.FALL_GRAVITY_ACCELERATION, currentCharacter.AIR_DRIFT_SPEED);
-    //    }
-    //    else
-    //    {
-    //        Debug.Log(currentCharacter.NAME + " has not been found in the scene");
-    //    }
-    //}
+    private static void CreatePseudoPadding(Rect windowRect, out Vector2 groupRectPaddingInWindow, out Rect groupRect)
+    {
+        groupRectPaddingInWindow = new Vector2(10.0f, 10.0f);
+        groupRect = new Rect(source: windowRect);
+        groupRect.x += groupRectPaddingInWindow.x;
+        groupRect.y += groupRectPaddingInWindow.y;
+        groupRect.width -= groupRectPaddingInWindow.x * 2;
+        groupRect.height -= groupRectPaddingInWindow.y * 2;
+    }
+
+    private Rect CreateButtons(float heightJump, float rowHeight, Rect rowRect)
+    {
+        int buttonCount = 0;
+        // save button field
+        buttonCount++;
+        Rect saveButtonRect = new Rect(0, rowRect.y + heightJump + rowHeight * buttonCount, _multiColumnHeaderWidth, rowHeight);
+        GUILayout.BeginArea(saveButtonRect);
+        if (GUILayout.Button("Save to csv-file"))
+        {
+            SaveToCSV();
+        }
+        GUILayout.EndArea();
+        // reset button field
+        buttonCount++;
+        Rect resetButtonRect = new Rect(0, rowRect.y + heightJump + rowHeight * buttonCount, _multiColumnHeaderWidth, rowHeight);
+        GUILayout.BeginArea(resetButtonRect);
+        if (GUILayout.Button("Reset Values"))
+        {
+            ReadCSVFile();
+        }
+        GUILayout.EndArea();
+        return rowRect;
+    }
+
+    private Rect FillTableWithFighterStats(float heightJump, FighterStats currentCharacter, Rect rowRect)
+    {
+        // name field
+        int columnIndex = 0;
+        rowRect = CreateStringFieldOfTable(heightJump, ref currentCharacter.NAME, rowRect, columnIndex);
+        // WALKING_SPEED field
+        columnIndex = 1;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.WALKING_SPEED, rowRect, columnIndex);
+        // HORIZONTAL_GROUND_DECELERATION field
+        columnIndex = 2;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.HORIZONTAL_GROUND_DECELERATION, rowRect, columnIndex);
+        // FALL_SPEED field
+        columnIndex = 3;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.FALL_SPEED, rowRect, columnIndex);
+        // FALL_GRAVITY_ACCELERATION field
+        columnIndex = 4;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.FALL_GRAVITY_ACCELERATION, rowRect, columnIndex);
+        // AIR_DRIFT_SPEED field
+        columnIndex = 5;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.AIR_DRIFT_SPEED, rowRect, columnIndex);
+        // AIR_DRIFT_ACCELERATION field
+        columnIndex = 6;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.AIR_DRIFT_ACCELERATION, rowRect, columnIndex);
+        // SHORTJUMP_JUMP_SPEED field
+        columnIndex = 7;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.SHORTJUMP_JUMP_SPEED, rowRect, columnIndex);
+        // SHORTJUMP_AIR_DECELERATION field
+        columnIndex = 8;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.SHORTJUMP_AIR_DECELERATION, rowRect, columnIndex);
+        // FULLJUMP_JUMP_SPEED field
+        columnIndex = 9;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.FULLJUMP_JUMP_SPEED, rowRect, columnIndex);
+        // FULLJUMP_AIR_DECELERATION field
+        columnIndex = 10;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.FULLJUMP_AIR_DECELERATION, rowRect, columnIndex);
+        // AIRJUMP_JUMP_SPEED field
+        columnIndex = 11;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.AIRJUMP_JUMP_SPEED, rowRect, columnIndex);
+        // AIRJUMP_AIR_DECELERATION field
+        columnIndex = 12;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.AIRJUMP_AIR_DECELERATION, rowRect, columnIndex);
+        // MAX_AIR_JUMP_COUNT field
+        columnIndex = 13;
+        rowRect = CreateFloatFieldOfTable(heightJump, ref currentCharacter.MAX_AIR_JUMP_COUNT, rowRect, columnIndex);
+        return rowRect;
+    }
+
+    private Rect CreateFloatFieldOfTable(float heightJump, ref float currentCharacterAttribute, Rect rowRect, int columnIndex)
+    {
+        if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+        {
+            int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+            Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+            columnRect.y = rowRect.y + heightJump;
+            //columnRect.height += heightJump;
+            GUIStyle fieldStyle = new GUIStyle(GUI.skin.textField)
+            {
+                alignment = TextAnchor.MiddleCenter,
+            };
+            currentCharacterAttribute = EditorGUI.FloatField(
+                position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                value: currentCharacterAttribute,
+                style: fieldStyle
+            );
+        }
+
+        return rowRect;
+    }
+
+    private Rect CreateStringFieldOfTable(float heightJump, ref string currentCharacterAttribute, Rect rowRect, int columnIndex)
+    {
+        if (_multiColumnHeader.IsColumnVisible(columnIndex: columnIndex))
+        {
+            // index of the visible columns
+            int visibleColumnIndex = _multiColumnHeader.GetVisibleColumnIndex(columnIndex: columnIndex);
+            // determination of the rectangle of a visible column
+            Rect columnRect = _multiColumnHeader.GetColumnRect(visibleColumnIndex: visibleColumnIndex);
+            // row height
+            columnRect.y = rowRect.y + heightJump;
+            //columnRect.height += heightJump;
+
+            // style of the field
+            GUIStyle nameFieldGUIStyle = new GUIStyle(GUI.skin.label)
+            {
+                padding = new RectOffset(left: 10, right: 10, top: 2, bottom: 2)
+            };
+            EditorGUI.LabelField(
+                position: _multiColumnHeader.GetCellRect(visibleColumnIndex: visibleColumnIndex, columnRect),
+                label: new GUIContent(currentCharacterAttribute),
+                style: nameFieldGUIStyle
+            );
+        }
+
+        return rowRect;
+    }
 
     private void Awake()
     {
