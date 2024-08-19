@@ -10,6 +10,7 @@ public class Fighter : MonoBehaviour
 
     [SerializeField] private InputActionAsset inputActionAsset;
     [SerializeField] public float percentDamage;
+    [SerializeField] public float deathCount;
 
     [SerializeField] private FighterMoveset.FaceDirection initialFaceDirection;
 
@@ -58,6 +59,7 @@ public class Fighter : MonoBehaviour
             transform.position = new Vector3(0.0f, 25.0f, 0.0f);
             fighterMoveset.fighterController.SetVelocity(Vector2.zero);
             percentDamage = 0.0f;
+            deathCount++;
         }
     }
 

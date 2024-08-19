@@ -5,8 +5,11 @@ using UnityEngine;
 
 public class PercentageUI : MonoBehaviour
 {
-    private TMP_Text redText;
-    private TMP_Text greenText;
+    private TMP_Text redPercentText;
+    private TMP_Text greenPercentText;
+
+    private TMP_Text redScoreText;
+    private TMP_Text greenScoreText;
 
     [SerializeField] public Fighter redFighter;
     [SerializeField] public Fighter greenFighter;
@@ -14,14 +17,20 @@ public class PercentageUI : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        redText = transform.Find("Red").GetComponent<TMP_Text>();
-        greenText = transform.Find("Green").GetComponent<TMP_Text>();
+        redPercentText = transform.Find("RedPercent").GetComponent<TMP_Text>();
+        greenPercentText = transform.Find("GreenPercent").GetComponent<TMP_Text>();
+
+        redScoreText = transform.Find("RedScore").GetComponent<TMP_Text>();
+        greenScoreText = transform.Find("GreenScore").GetComponent<TMP_Text>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        redText.text = "" + redFighter.percentDamage + "%";
-        greenText.text = "" + greenFighter.percentDamage + "%";
+        redPercentText.text = "" + redFighter.percentDamage + "%";
+        greenPercentText.text = "" + greenFighter.percentDamage + "%";
+
+        redScoreText.text = "Score: " + greenFighter.deathCount;
+        greenScoreText.text = "Score: " + redFighter.deathCount;
     }
 }
