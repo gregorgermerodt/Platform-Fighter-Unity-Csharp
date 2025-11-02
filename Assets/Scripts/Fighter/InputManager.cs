@@ -16,7 +16,7 @@ public class InputManager : MonoBehaviour
 
     [field: SerializeField] public bool allowControllerAssigns { get; set; }
     [field: SerializeField] public List<int> playerControllerDeviceIds = new List<int> { -1, -1 };
-
+    [field: SerializeField] public int sharedKeyboardDeviceId { get; set; } = -1;
     public event Action<InputManager> UpdateDeviceIdsEvent;
 
     public static InputManager Instance { get; private set; }
@@ -102,6 +102,12 @@ public class InputManager : MonoBehaviour
         }
         else if (change == InputDeviceChange.Removed)
         {
+            if (device is Keyboard && sharedKeyboardDeviceId == device.deviceId)
+            {
+                sharedKeyboardDeviceId = -1;
+                Debug.LogWarning("Keyboard device: " + device.name + " (Id: " + device.deviceId + ") has been disconnected and cleared from shared keyboard slot.");
+                return;
+            }
             for (int i = 0; i < playerControllerDeviceIds.Count; i++)
             {
                 if (playerControllerDeviceIds[i] == device.deviceId)
@@ -126,7 +132,19 @@ public class InputManager : MonoBehaviour
             //Debug.LogWarning("Device: " + context.control.device.name + " (Id: " + context.control.device.deviceId +
             //    ") is trying get assigned before the set delay!");
         }
-        if (!playerControllerDeviceIds.Contains(context.control.device.deviceId))
+
+        if (context.control.device is Keyboard)
+        {
+            // Track the shared keyboard device id separately so both players can use the same keyboard
+            var keyboardId = context.control.device.deviceId;
+            if (sharedKeyboardDeviceId != keyboardId)
+            {
+                sharedKeyboardDeviceId = keyboardId;
+                Debug.Log("Keyboard detected (Id: " + keyboardId + ") assigned as shared keyboard.");
+                UpdateDeviceIdsEvent.Invoke(this);
+            }
+        }
+        else if (!playerControllerDeviceIds.Contains(context.control.device.deviceId))
             for (int i = 0; i < playerControllerDeviceIds.Count; i++)
                 if (playerControllerDeviceIds[i] == -1)
                 {

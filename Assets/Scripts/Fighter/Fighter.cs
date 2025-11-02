@@ -80,12 +80,23 @@ public class Fighter : MonoBehaviour
             foreach (var pair in fighterMoveset.inputActions)
                 pair.Value.inputAction.Disable();
 
-            return;
         }
+        var devices = new System.Collections.Generic.List<InputDevice>();
+        if (playerControllerId != -1)
+        {
+            var inputDevice = InputSystem.GetDeviceById(playerControllerId);
+            if (inputDevice != null) devices.Add(inputDevice);
+        }
+        if (inputManager.sharedKeyboardDeviceId != -1)
+        {
+            var keyboardDevice = InputSystem.GetDeviceById(inputManager.sharedKeyboardDeviceId);
+            if (keyboardDevice != null) devices.Add(keyboardDevice);
+        }
+        InputDevice[] inputDevices = devices.ToArray();
         foreach (var pair in fighterMoveset.inputActions)
         {
             pair.Value.inputAction.Enable();
-            pair.Value.inputAction.actionMap.devices = new InputDevice[] { InputSystem.GetDeviceById(playerControllerId) };
+            pair.Value.inputAction.actionMap.devices = inputDevices;
         }
     }
 }

@@ -24,19 +24,10 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Shield",
-                    "type": "Button",
-                    "id": "0c80924e-8a36-40fa-8759-6ab383aca53e",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Attack",
                     "type": "Button",
                     "id": "35a62c34-7a1c-4945-8e46-3f7f1583ae6d",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -134,7 +125,7 @@
                 {
                     "name": "",
                     "id": "ab3bdc40-3121-4f08-a2ff-5c7e7759f393",
-                    "path": "<Keyboard>/space",
+                    "path": "<Keyboard>/c",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -144,30 +135,8 @@
                 },
                 {
                     "name": "",
-                    "id": "4395c5f1-c36d-4691-960d-9e8364bd2878",
-                    "path": "<Gamepad>/rightTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Shield",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "0113b544-40be-4d6d-a429-e4aafb2411ce",
-                    "path": "<Gamepad>/leftTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Shield",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "f85a3197-b2c5-4ccb-873d-f45de5391757",
-                    "path": "<Keyboard>/c",
+                    "path": "<Keyboard>/e",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
