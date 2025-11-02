@@ -21,6 +21,8 @@ public class InputManager : MonoBehaviour
 
     public static InputManager Instance { get; private set; }
 
+    private float startTime;
+
     private void OnEnable()
     {
         if (Instance == null)
@@ -44,7 +46,7 @@ public class InputManager : MonoBehaviour
 
     private void OnReloadScenePerformed(InputAction.CallbackContext context)
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);     
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     void OnValidate()
@@ -53,8 +55,16 @@ public class InputManager : MonoBehaviour
             UpdateDeviceIdsEvent.Invoke(this);
     }
 
+    void Start()
+    {
+        startTime = Time.time;
+    }
+
     void Update()
     {
+        if (Time.time - startTime < 1f)
+            return;
+
         if (!reloadSceneAction.enabled)
             reloadSceneAction.Enable();
         if (allowControllerAssigns && !anyKeyAction.enabled)
@@ -77,16 +87,11 @@ public class InputManager : MonoBehaviour
         }
         anyKeyAction.started -= OnAnyKeyPerformed;
         reloadSceneAction.started -= OnReloadScenePerformed;
-        
+
         anyKeyAction.Disable();
         reloadSceneAction.Disable();
-        
-        Instance = null;
-    }
 
-    void Start()
-    {
-        lastConnect = Time.time;
+        Instance = null;
     }
 
     private void OnDeviceChange(InputDevice device, InputDeviceChange change)
