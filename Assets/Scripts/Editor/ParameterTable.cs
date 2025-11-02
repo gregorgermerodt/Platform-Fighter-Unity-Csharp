@@ -92,8 +92,8 @@ public class ParameterTable : EditorWindow
 
     private string GetCSVFilePath()
     {
-        string relativecsvFilePath = "Resources/CSV-Files/stats.csv";
-        return Path.Combine(Application.dataPath, relativecsvFilePath);
+        string relativeCSVFilePath = "Resources/CSV-Files/stats.csv";
+        return Path.Combine(Application.dataPath, relativeCSVFilePath);
     }
 
     [MenuItem(itemName: "Tools/Stats table")]
@@ -119,25 +119,31 @@ public class ParameterTable : EditorWindow
 
         //_firstOnGUIIterationAfterInitialize = true; // used for loop if there are more than one characterStats row
         _multiColumnHeaderWidth = position.width;
-        float clomunsMinWidth = 20.0f;
+        float columnsMinWidth = 20.0f;
         float columnsMaxWidth = 150.0f;
-        _columns = new MultiColumnHeaderState.Column[]
+        string[] columnNames = new[]
         {
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "Name"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "WALKING_SPEED"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "HORIZONTAL_GROUND_DECELERATION"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "FALL_SPEED"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "FALL_GRAVITY_ACCELERATION"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "AIR_DRIFT_SPEED"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "AIR_DRIFT_ACCELERATION"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "SHORTJUMP_JUMP_SPEED"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "SHORTJUMP_AIR_DECELERATION"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "FULLJUMP_JUMP_SPEED"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "FULLJUMP_AIR_DECELERATION"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "AIRJUMP_JUMP_SPEED"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "AIRJUMP_AIR_DECELERATION"),
-            CreateMultiColumnHeraderState_Column(clomunsMinWidth,columnsMaxWidth,name: "MAX_AIR_JUMP_COUNT"),
+            "Name",
+            "WALKING_SPEED",
+            "HORIZONTAL_GROUND_DECELERATION",
+            "FALL_SPEED",
+            "FALL_GRAVITY_ACCELERATION",
+            "AIR_DRIFT_SPEED",
+            "AIR_DRIFT_ACCELERATION",
+            "SHORTJUMP_JUMP_SPEED",
+            "SHORTJUMP_AIR_DECELERATION",
+            "FULLJUMP_JUMP_SPEED",
+            "FULLJUMP_AIR_DECELERATION",
+            "AIRJUMP_JUMP_SPEED",
+            "AIRJUMP_AIR_DECELERATION",
+            "MAX_AIR_JUMP_COUNT",
         };
+
+        _columns = new MultiColumnHeaderState.Column[columnNames.Length];
+        for (int i = 0; i < columnNames.Length; i++)
+        {
+            _columns[i] = CreateMultiColumnHeaderState_Column(columnsMinWidth, columnsMaxWidth, name: columnNames[i]);
+        }
 
         _multiColumnHeaderState = new MultiColumnHeaderState(columns: _columns);
         _multiColumnHeader = new MultiColumnHeader(state: _multiColumnHeaderState);
@@ -157,7 +163,7 @@ public class ParameterTable : EditorWindow
         _multiColumnHeader.ResizeToFit();
     }
 
-    private static MultiColumnHeaderState.Column CreateMultiColumnHeraderState_Column(float minWidth, float maxWidth, string name)
+    private static MultiColumnHeaderState.Column CreateMultiColumnHeaderState_Column(float minWidth, float maxWidth, string name)
     {
         return new MultiColumnHeaderState.Column()
         {
@@ -192,7 +198,6 @@ public class ParameterTable : EditorWindow
         Rect groupRect;
         CreatePseudoPadding(windowRect, out groupRectPaddingInWindow, out groupRect); // actually the size of the rectangle
 
-        float heightJump = columnHeight;
         float rowHeight = 20.0f;
 
         // new group => positioning relative to groupRect
@@ -235,13 +240,13 @@ public class ParameterTable : EditorWindow
                 FighterStats currentCharacter = fighterStats;
                 Rect rowRect = new Rect(source: columnRectPrototype);
 
-                rowRect = FillTableWithFighterStats(heightJump, currentCharacter, rowRect);
-                rowRect = CreateButtons(heightJump, rowHeight, rowRect);
+                rowRect = FillTableWithFighterStats(columnHeight, currentCharacter, rowRect);
+                rowRect = CreateButtons(columnHeight, rowHeight, rowRect);
 
                 // use saved height for each row to draw rectangles to prevent overlapping drawing
                 Rect backgroundColorRect = new Rect(source: rowRect)
                 {
-                    y = rowRect.y + heightJump,
+                    y = rowRect.y + columnHeight,
                     height = rowHeight
                 };
             }
